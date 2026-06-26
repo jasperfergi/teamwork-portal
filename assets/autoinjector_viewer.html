@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html,body{
+  height:100%;
+  font-family:-apple-system,'Helvetica Neue',Arial,sans-serif;
+  background:#FAFAF8;
+  overflow:hidden;
+  display:flex;
+  flex-direction:column;
+}
+#container{flex:1;display:flex;flex-direction:column;height:100%}
+#dev-wrap{flex:1;position:relative;overflow:hidden;cursor:default}
+#dev{width:100%;height:100%;display:block}
+
+.cg{transition:transform .55s cubic-bezier(.4,0,.2,1),opacity .42s ease}
+.cg.hot{cursor:pointer}
+.cg.selected .cf{
+  filter:brightness(1.07) drop-shadow(0 0 9px rgba(27,139,165,.45))!important;
+}
+
+.hint{
+  position:absolute;bottom:0;left:0;right:0;
+  text-align:center;padding:10px 0;
+  font-size:11.5px;color:#9B9B9B;letter-spacing:.02em;
+  pointer-events:none;transition:opacity .3s;
+}
+#container.showing .hint{opacity:0}
+
+.badge{opacity:0;pointer-events:none;transition:opacity .22s ease .4s}
+#container.showing .badge{opacity:1}
+
+/* ── Info bar ── */
+.ibar{
+  min-height:110px;background:#fff;border-top:1px solid #E5E3DE;
+  padding:14px 20px;display:none;flex-direction:column;gap:6px;
+}
+.ibar.on{display:flex}
+.ibar-top{display:flex;align-items:flex-start;gap:12px}
+.idot{width:10px;height:10px;border-radius:50%;flex-shrink:0;margin-top:4px}
+.itext{flex:1;min-width:0}
+.inum{font-size:10.5px;font-family:'SF Mono','Roboto Mono',monospace;font-weight:700;color:#6B6B6B;letter-spacing:.06em;margin-bottom:2px}
+.iname{font-size:14px;font-weight:700;color:#1A1A1A;line-height:1.2}
+.irev{font-size:11px;color:#6B6B6B;margin-top:2px}
+.idesc{font-size:12px;color:#4A4A48;line-height:1.5;margin-top:4px}
+.ibar-bottom{display:flex;align-items:center;gap:10px;margin-top:2px}
+.idrw{
+  display:inline-flex;align-items:center;gap:6px;
+  font-size:12px;font-weight:600;color:#003057;
+  background:#EEF2F7;padding:5px 12px;border-radius:6px;
+  border:1px solid #D0DAE8;text-decoration:none;
+  transition:background .15s,color .15s;
+}
+.idrw:hover{background:#003057;color:#fff}
+.iclose{
+  margin-left:auto;font-size:11px;color:#9B9B9B;cursor:pointer;
+  background:none;border:none;font-family:inherit;padding:4px 8px;border-radius:4px;
+}
+.iclose:hover{background:#F0EEE8;color:#4A4A48}
+</style>
+</head>
+<body>
+<div id="container">
+  <div id="dev-wrap">
+    <div class="hint">Hover to explore · click a numbered part for details</div>
+
+    <!--
+      All components share centre-line Y = 152.5 inside viewBox 0 0 1000 310.
+      Housing rect y=111, h=83 → centre 152.5.
+      Every other component is adjusted to the same vertical centre.
+    -->
+    <svg id="dev" viewBox="0 0 1000 310" preserveAspectRatio="xMidYMid meet">
+      <defs>
+        <linearGradient id="gH" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%"   stop-color="#FFFFFF"/>
+          <stop offset="25%"  stop-color="#F7F6F3"/>
+          <stop offset="65%"  stop-color="#ECEAE5"/>
+          <stop offset="100%" stop-color="#DEDAD3"/>
+        </linearGradient>
+        <linearGradient id="gT" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%"   stop-color="#3ABDD8"/>
+          <stop offset="36%"  stop-color="#1A8BA5"/>
+          <stop offset="100%" stop-color="#116778"/>
+        </linearGradient>
+        <linearGradient id="gTF" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%"   stop-color="#44C7E0"/>
+          <stop offset="36%"  stop-color="#1E96B4"/>
+          <stop offset="100%" stop-color="#14728A"/>
+        </linearGradient>
+        <linearGradient id="gGl" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%"   stop-color="#E4F6FB"/>
+          <stop offset="50%"  stop-color="#C0E6F4"/>
+          <stop offset="100%" stop-color="#9ECCE2"/>
+        </linearGradient>
+        <linearGradient id="gM" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%"   stop-color="#DCDCD8"/>
+          <stop offset="48%"  stop-color="#AAAAA8"/>
+          <stop offset="100%" stop-color="#888886"/>
+        </linearGradient>
+        <filter id="fs" x="-10%" y="-20%" width="126%" height="155%">
+          <feDropShadow dx="0" dy="3" stdDeviation="5" flood-color="rgba(0,0,0,.10)"/>
+        </filter>
+        <filter id="fss" x="-8%" y="-14%" width="122%" height="138%">
+          <feDropShadow dx="0" dy="2" stdDeviation="3" flood-color="rgba(0,0,0,.09)"/>
+        </filter>
+      </defs>
+
+      <!-- ══ INTERNALS (hidden until explode) ══ -->
+
+      <!-- P08 Plunger Rod  centre y=152 -->
+      <g class="cg hot" id="cg-plunger" style="opacity:0"
+         data-num="P08" data-name="Plunger Rod" data-rev="Rev B"
+         data-mat="Passivated 304 Stainless Steel"
+         data-desc="Transfers drive spring force to the syringe stopper for consistent dose delivery over the full 1 mL injection stroke."
+         data-spec="Length 88 ± 0.2 mm · full drive force transmission"
+         data-drw="SC-DWG-008-B" data-col="#AAAAA8">
+        <rect class="cf" x="407" y="143" width="368" height="18" rx="8" fill="url(#gM)" filter="url(#fss)"/>
+        <ellipse class="cf" cx="742" cy="152" rx="12" ry="13" fill="#BEBEB8" stroke="#909090" stroke-width=".7"/>
+        <ellipse class="cf" cx="407" cy="152" rx="7" ry="9" fill="#D2D2CE"/>
+        <g class="badge">
+          <circle cx="590" cy="152" r="11" fill="#1A8BA5" stroke="white" stroke-width="1.5"/>
+          <text x="590" y="156.5" text-anchor="middle" font-size="9.5" font-weight="800" fill="white" font-family="-apple-system,sans-serif">8</text>
+        </g>
+      </g>
+
+      <!-- P07 Drive Spring  centre y≈153 (path shifted +5 from original) -->
+      <g class="cg hot" id="cg-spring" style="opacity:0"
+         data-num="P07" data-name="Drive Spring" data-rev="Rev C"
+         data-mat="316L Stainless Steel Wire"
+         data-desc="Compression spring providing injection drive force. Pre-load tightened from ±5% to ±3% per Decision D-012 following DV pilot dose-accuracy data."
+         data-spec="180 N/m rate ±3% · pre-load 34 N · free length 92 mm"
+         data-drw="SC-DWG-007-C" data-col="#AAAAA8">
+        <path class="cf"
+          d="M594,127 Q604,122 614,127 Q624,132 634,127 Q644,122 654,127 Q664,132 674,127 Q684,122 694,127 Q704,132 714,127 Q724,122 734,127 Q744,132 748,127
+             L748,179
+             Q744,184 734,179 Q724,174 714,179 Q704,184 694,179 Q684,174 674,179 Q664,184 654,179 Q644,174 634,179 Q624,184 614,179 Q604,174 594,179 Z"
+          fill="url(#gM)" stroke="#9A9A96" stroke-width=".5" filter="url(#fss)"/>
+        <rect class="cf" x="587" y="125" width="11" height="56" rx="3" fill="#C8C8C4" stroke="#9A9A96" stroke-width=".5"/>
+        <rect class="cf" x="748" y="125" width="11" height="56" rx="3" fill="#C8C8C4" stroke="#9A9A96" stroke-width=".5"/>
+        <g class="badge">
+          <circle cx="672" cy="153" r="11" fill="#1A8BA5" stroke="white" stroke-width="1.5"/>
+          <text x="672" y="157.5" text-anchor="middle" font-size="9.5" font-weight="800" fill="white" font-family="-apple-system,sans-serif">7</text>
+        </g>
+      </g>
+
+      <!-- P06 Drug Cartridge  centre y=152 -->
+      <g class="cg hot" id="cg-cart" style="opacity:0"
+         data-num="P06" data-name="Drug Cartridge (1 mL PFS)" data-rev="Rev B"
+         data-mat="Borosilicate Glass Type I"
+         data-desc="1 mL staked-needle prefilled syringe. Silicone-lubricated rubber stopper; ETFE film-coated tip cap. Drug at 150 mg/mL."
+         data-spec="Break-loose ≤ 8 N · glide force ≤ 15 N"
+         data-drw="SC-DWG-006-B" data-col="#1E96B4">
+        <rect class="cf" x="418" y="131" width="186" height="42" rx="21"
+              fill="url(#gGl)" stroke="#8EC8DC" stroke-width=".8" filter="url(#fss)"/>
+        <line x1="468" y1="135" x2="468" y2="170" stroke="#8EC8DC" stroke-width=".7" stroke-opacity=".65"/>
+        <line x1="510" y1="135" x2="510" y2="170" stroke="#8EC8DC" stroke-width=".7" stroke-opacity=".65"/>
+        <line x1="552" y1="135" x2="552" y2="170" stroke="#8EC8DC" stroke-width=".7" stroke-opacity=".65"/>
+        <rect x="422" y="135" width="160" height="34" rx="17" fill="rgba(174,226,242,.36)"/>
+        <ellipse class="cf" cx="591" cy="152" rx="11" ry="19" fill="#D8D4CC" stroke="#B8B4AC" stroke-width=".7"/>
+        <g class="badge">
+          <circle cx="504" cy="152" r="11" fill="#1E96B4" stroke="white" stroke-width="1.5"/>
+          <text x="504" y="156.5" text-anchor="middle" font-size="9.5" font-weight="800" fill="white" font-family="-apple-system,sans-serif">6</text>
+        </g>
+      </g>
+
+      <!-- ══ OUTER SHELL ══ -->
+
+      <!-- P04 Main Housing  y=111 h=83 → centre 152.5 -->
+      <g class="cg hot" id="cg-housing"
+         data-num="P04" data-name="Main Housing" data-rev="Rev F"
+         data-mat="ABS, White RAL 9003"
+         data-desc="Primary structural body. Internal geometry retains drive spring, cartridge, and plunger in axial alignment. Ribbed grip zone enables single-handed operation."
+         data-spec="Length 155 ± 0.5 mm · wall thickness 2.0 ± 0.1 mm"
+         data-drw="SC-DWG-004-F" data-col="#ECEAE5">
+        <rect x="397" y="115" width="450" height="83" rx="20" fill="rgba(0,0,0,.07)" transform="translate(0 4)"/>
+        <rect class="cf" x="397" y="111" width="450" height="83" rx="20" fill="url(#gH)"/>
+        <rect x="407" y="112" width="430" height="22" rx="18" fill="rgba(255,255,255,.70)"/>
+        <line x1="777" y1="113" x2="777" y2="192" stroke="#D0CEC8" stroke-width="1.5"/>
+        <line x1="790" y1="113" x2="790" y2="192" stroke="#D0CEC8" stroke-width="1.5"/>
+        <line x1="803" y1="113" x2="803" y2="192" stroke="#D0CEC8" stroke-width="1.5"/>
+        <line x1="816" y1="113" x2="816" y2="192" stroke="#D0CEC8" stroke-width="1.5"/>
+        <line x1="829" y1="113" x2="829" y2="192" stroke="#D0CEC8" stroke-width="1.5"/>
+        <rect x="407" y="187" width="430" height="6" rx="4" fill="rgba(0,0,0,.04)"/>
+        <g class="badge">
+          <circle cx="520" cy="152" r="11" fill="#3D5A73" stroke="white" stroke-width="1.5"/>
+          <text x="520" y="156.5" text-anchor="middle" font-size="9.5" font-weight="800" fill="white" font-family="-apple-system,sans-serif">4</text>
+        </g>
+      </g>
+
+      <!-- P03 Front Housing  y=104 h=97 → centre 152.5 -->
+      <g class="cg hot" id="cg-front"
+         data-num="P03" data-name="Front Housing" data-rev="Rev F"
+         data-mat="ABS/PC Blend, Teal RAL 5021"
+         data-desc="Teal over-moulded section housing the passive needle retraction mechanism. Colour coding distinguishes the presentation end for human factors compliance."
+         data-spec="Wall thickness 1.8 ± 0.1 mm"
+         data-drw="SC-DWG-003-F" data-col="#1E96B4">
+        <rect x="278" y="108" width="126" height="97" rx="16" fill="rgba(0,0,0,.07)" transform="translate(0 4)"/>
+        <rect class="cf" x="278" y="104" width="126" height="97" rx="16" fill="url(#gTF)"/>
+        <rect x="290" y="121" width="52" height="18" rx="5" fill="rgba(255,255,255,.14)"/>
+        <ellipse cx="341" cy="108" rx="47" ry="11" fill="rgba(255,255,255,.17)"/>
+        <g class="badge">
+          <circle cx="341" cy="152" r="11" fill="#003057" stroke="white" stroke-width="1.5"/>
+          <text x="341" y="156.5" text-anchor="middle" font-size="9.5" font-weight="800" fill="white" font-family="-apple-system,sans-serif">3</text>
+        </g>
+      </g>
+
+      <!-- P02 Rigid Needle Shield  y=127 h=50 → centre 152 -->
+      <g class="cg hot" id="cg-rns"
+         data-num="P02" data-name="Rigid Needle Shield" data-rev="Rev D"
+         data-mat="316L Stainless Steel"
+         data-desc="Sterile barrier bonded to the needle hub. Maintains sterility and protects the needle prior to use. Removed with the front housing during device preparation."
+         data-spec="OD 6.35 ± 0.05 mm · removal force 5–15 N"
+         data-drw="SC-DWG-002-D" data-col="#DEDAD3">
+        <rect class="cf" x="213" y="127" width="68" height="50" rx="10"
+              fill="#F0EEE8" stroke="#D4D2CC" stroke-width=".8" filter="url(#fss)"/>
+        <rect x="213" y="127" width="68" height="13" rx="10" fill="rgba(255,255,255,.6)"/>
+        <g class="badge">
+          <circle cx="247" cy="152" r="11" fill="#3D5A73" stroke="white" stroke-width="1.5"/>
+          <text x="247" y="156.5" text-anchor="middle" font-size="9.5" font-weight="800" fill="white" font-family="-apple-system,sans-serif">2</text>
+        </g>
+      </g>
+
+      <!-- P01 Needle Cap  y=116 h=72 → centre 152 -->
+      <g class="cg hot" id="cg-cap"
+         data-num="P01" data-name="Needle Cap" data-rev="Rev C"
+         data-mat="Polypropylene (PP), Teal"
+         data-desc="Colour-coded tamper-evidence cap protecting the needle during cold-chain storage and shipping. Twist-and-pull removal required before injection."
+         data-spec="Removal force 5–15 N · pull-off axial ≤ 8 N"
+         data-drw="SC-DWG-001-C" data-col="#1E96B4">
+        <rect x="133" y="120" width="82" height="65" rx="30" fill="rgba(0,0,0,.09)" transform="translate(0 4)"/>
+        <rect class="cf" x="133" y="116" width="82" height="72" rx="32" fill="url(#gT)"/>
+        <ellipse cx="166" cy="127" rx="27" ry="9" fill="rgba(255,255,255,.22)"/>
+        <g class="badge">
+          <circle cx="174" cy="152" r="11" fill="#003057" stroke="white" stroke-width="1.5"/>
+          <text x="174" y="156.5" text-anchor="middle" font-size="9.5" font-weight="800" fill="white" font-family="-apple-system,sans-serif">1</text>
+        </g>
+      </g>
+
+      <!-- P05 Activation Button  y=111 h=83 → centre 152.5 -->
+      <g class="cg hot" id="cg-btn"
+         data-num="P05" data-name="Activation Button" data-rev="Rev A"
+         data-mat="ABS, Teal RAL 5021"
+         data-desc="End-cap activation button. Single-step depression releases the drive spring, initiating the injection and passive needle retraction sequence."
+         data-spec="Activation force 10–25 N · travel 3.5 ± 0.5 mm"
+         data-drw="SC-DWG-005-A" data-col="#1E96B4">
+        <rect x="847" y="115" width="82" height="83" rx="24" fill="rgba(0,0,0,.09)" transform="translate(0 4)"/>
+        <rect class="cf" x="847" y="111" width="82" height="83" rx="24" fill="url(#gT)"/>
+        <ellipse cx="878" cy="122" rx="24" ry="8" fill="rgba(255,255,255,.20)"/>
+        <g class="badge">
+          <circle cx="868" cy="152" r="11" fill="#003057" stroke="white" stroke-width="1.5"/>
+          <text x="868" y="156.5" text-anchor="middle" font-size="9.5" font-weight="800" fill="white" font-family="-apple-system,sans-serif">5</text>
+        </g>
+      </g>
+
+      <!-- Assembly seam -->
+      <line id="seam" x1="403" y1="111" x2="403" y2="194"
+            stroke="#D0CEC8" stroke-width=".8" stroke-dasharray="3,2.5"
+            style="transition:opacity .3s"/>
+    </svg>
+  </div>
+
+  <div class="ibar" id="ibar">
+    <div class="ibar-top">
+      <div class="idot" id="idot"></div>
+      <div class="itext">
+        <div class="inum" id="inum"></div>
+        <div class="iname" id="iname"></div>
+        <div class="irev" id="irev"></div>
+        <div class="idesc" id="idesc"></div>
+      </div>
+      <button class="iclose" onclick="clearSel()">✕ Close</button>
+    </div>
+    <div class="ibar-bottom">
+      <a class="idrw" id="idrw" href="#" target="_blank">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+          <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+          <polyline points="14 2 14 8 20 8"/>
+        </svg>
+        <span id="idrw-label"></span>
+      </a>
+    </div>
+  </div>
+</div>
+
+<script>
+var EXPLODE = {
+  'cg-cap':     [-88, 0],
+  'cg-rns':     [-50, 0],
+  'cg-front':   [-18, 0],
+  'cg-housing': [0, 0],
+  'cg-btn':     [58, 0],
+  'cg-cart':    [0, -80],
+  'cg-spring':  [0, -108],
+  'cg-plunger': [0, 76]
+};
+var INTERNAL = {'cg-cart':1,'cg-spring':1,'cg-plunger':1};
+var DRW_BASE = 'https://gilead-team.sharepoint.com/sites/Sycamore/CAD/drawings/';
+
+var container  = document.getElementById('container');
+var devWrap    = document.getElementById('dev-wrap');
+var seam       = document.getElementById('seam');
+var ibar       = document.getElementById('ibar');
+var idot       = document.getElementById('idot');
+var inum       = document.getElementById('inum');
+var iname      = document.getElementById('iname');
+var irev       = document.getElementById('irev');
+var idesc      = document.getElementById('idesc');
+var idrw       = document.getElementById('idrw');
+var idrwLabel  = document.getElementById('idrw-label');
+var exploded   = false;
+var selectedEl = null;
+
+function setExploded(on) {
+  if (exploded === on) return;
+  exploded = on;
+  container.classList.toggle('showing', on);
+  if (seam) seam.style.opacity = on ? '0' : '1';
+  Object.keys(EXPLODE).forEach(function(id) {
+    var el = document.getElementById(id);
+    if (!el) return;
+    var dx = EXPLODE[id][0], dy = EXPLODE[id][1];
+    el.style.transform = on ? 'translate('+dx+'px,'+dy+'px)' : '';
+    if (INTERNAL[id]) el.style.opacity = on ? '1' : '0';
+  });
+  if (!on) clearSel();
+}
+
+devWrap.addEventListener('mouseenter', function() { setExploded(true); });
+container.addEventListener('mouseleave', function() { setExploded(false); });
+
+function selectEl(el) {
+  if (selectedEl) selectedEl.classList.remove('selected');
+  selectedEl = el;
+  el.classList.add('selected');
+  var drwRef = el.dataset.drw || '';
+  idot.style.background = el.dataset.col || '#1E96B4';
+  inum.textContent      = el.dataset.num || '';
+  iname.textContent     = el.dataset.name || '';
+  irev.textContent      = (el.dataset.rev || '') + (el.dataset.mat ? '  ·  ' + el.dataset.mat : '');
+  idesc.textContent     = el.dataset.desc || '';
+  idrwLabel.textContent = drwRef + '  →  open drawing';
+  idrw.href             = DRW_BASE + drwRef + '.pdf';
+  ibar.classList.add('on');
+}
+
+function clearSel() {
+  if (selectedEl) selectedEl.classList.remove('selected');
+  selectedEl = null;
+  ibar.classList.remove('on');
+}
+
+document.querySelectorAll('.cg.hot').forEach(function(el) {
+  el.addEventListener('click', function(e) {
+    e.stopPropagation();
+    if (exploded) selectEl(el);
+  });
+});
+document.getElementById('dev').addEventListener('click', function() { clearSel(); });
+</script>
+</body>
+</html>

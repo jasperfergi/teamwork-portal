@@ -1,0 +1,33 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 320" width="160" height="320">
+  <!-- Needle cap - rounded top -->
+  <ellipse cx="80" cy="34" rx="28" ry="22" fill="#4A90C4"/>
+  <rect x="52" y="34" width="56" height="38" fill="#4A90C4"/>
+  <!-- Cap highlight -->
+  <ellipse cx="66" cy="26" rx="7" ry="5" fill="rgba(255,255,255,0.2)" transform="rotate(-20,66,26)"/>
+
+  <!-- RNS connector -->
+  <rect x="64" y="70" width="32" height="16" rx="2" fill="#9EAAB8"/>
+
+  <!-- Main housing -->
+  <rect x="24" y="84" width="112" height="162" rx="6" fill="#4A6FA5"/>
+  <!-- Housing highlight -->
+  <rect x="28" y="84" width="14" height="162" rx="4" fill="rgba(255,255,255,0.10)"/>
+
+  <!-- View window: drug cartridge visible -->
+  <rect x="52" y="104" width="56" height="96" rx="3" fill="rgba(168,212,238,0.40)" stroke="rgba(255,255,255,0.25)" stroke-width="1"/>
+  <!-- Drug liquid fill -->
+  <rect x="53" y="105" width="54" height="76" rx="2" fill="rgba(168,212,238,0.55)"/>
+
+  <!-- Product text -->
+  <text x="80" y="220" text-anchor="middle" font-family="Helvetica,Arial,sans-serif" font-size="9" fill="rgba(255,255,255,0.55)" font-weight="700" letter-spacing="0.12em">SYCAMORE</text>
+
+  <!-- Activation button -->
+  <rect x="24" y="244" width="112" height="38" rx="4" fill="#3D5A73"/>
+  <text x="80" y="268" text-anchor="middle" font-family="Helvetica,Arial,sans-serif" font-size="7" fill="rgba(255,255,255,0.65)" letter-spacing="0.08em">PRESS TO INJECT</text>
+
+  <!-- End cap / base -->
+  <rect x="24" y="280" width="112" height="32" rx="5" fill="#7D8F9B"/>
+
+  <!-- Shadow under base -->
+  <ellipse cx="80" cy="318" rx="44" ry="4" fill="rgba(0,0,0,0.08)"/>
+</svg>

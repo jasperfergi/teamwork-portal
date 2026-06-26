@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(curl -sL \"https://assets.team-consulting.com/wp-content/uploads/2015/09/17172815/John-Burke-2-300x300.jpg\" -o john_burke.jpg)",
+      "Bash(curl -sL \"https://assets.team-consulting.com/wp-content/uploads/2023/03/14155126/Thomas-Grant-300x300.jpg\" -o tom_grant.jpg)",
+      "Bash(curl -sL \"https://assets.team-consulting.com/wp-content/uploads/2025/11/11100710/Emily-Morley-300x300.jpg\" -o emily_morley.jpg)",
+      "Bash(curl -sL \"https://assets.team-consulting.com/wp-content/uploads/2026/02/12121836/Louis-DeCleyn-1-300x300.jpg\" -o louis_decleyn.jpg)",
+      "Bash(curl -sL \"https://assets.team-consulting.com/wp-content/uploads/2025/11/11171113/Jasper-Ferguson-300x300.jpg\" -o jasper_ferguson.jpg)",
+      "Bash(curl -sL \"https://gilead.stylelabs.cloud/api/public/content/89749f3b535e4eebb8ae07c8e9607b17?v=bf06f14e\" -o /Users/jasper/Downloads/teamwork_portal/assets/img/gilead_logo_v2.png)",
+      "Bash(.venv/bin/python -c ' *)"
+    ]
+  }
+}

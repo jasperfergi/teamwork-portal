@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>TC Decision Flow</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  font-family:-apple-system,"Helvetica Neue",Helvetica,Arial,sans-serif;
+  background:#F7F8FA;color:#1A1A1A;font-size:13px;
+  display:flex;flex-direction:column;height:100vh;overflow:hidden;
+}
+.scroll-area{
+  flex:1;overflow:auto;cursor:grab;user-select:none;
+  padding:24px 30px 16px;min-height:0;
+}
+.scroll-area:active{cursor:grabbing}
+.scroll-area::-webkit-scrollbar{height:4px;width:4px}
+.scroll-area::-webkit-scrollbar-thumb{background:#D0CEC9;border-radius:2px}
+.flow-wrap{position:relative;width:2230px;height:490px}
+svg.conn{position:absolute;top:0;left:0;pointer-events:none;overflow:visible}
+
+.node{
+  position:absolute;width:220px;
+  background:#fff;border:1.5px solid #E0DDD8;border-radius:10px;
+  padding:11px 13px 10px;
+  box-shadow:0 1px 4px rgba(0,0,0,0.06);
+  cursor:pointer;transition:box-shadow .15s,border-color .15s;
+}
+.node:hover{box-shadow:0 3px 10px rgba(0,0,0,0.12);border-color:#C0BDB8}
+.node.closed  {border-top:3px solid #2D6B3D}
+.node.inprog  {border-top:3px solid #C17817}
+.node.open    {border-top:3px solid #3B5B8C}
+
+.node-hd{display:flex;align-items:center;gap:6px;margin-bottom:5px}
+.ndot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.closed .ndot{background:#2D6B3D}
+.inprog .ndot{background:#C17817}
+.open   .ndot{background:#3B5B8C}
+.nid   {font-size:9.5px;font-weight:700;letter-spacing:.08em;color:#9B9B9B}
+.ndate {font-size:9px;color:#C0BCB8;margin-left:auto}
+.ntitle{font-size:12px;font-weight:700;color:#1A1A1A;margin-bottom:3px;line-height:1.3}
+.ndec  {font-size:11px;color:#4A4A48;margin-bottom:6px;line-height:1.35}
+.nmeta {font-size:9.5px;color:#B8B5B0}
+
+/* Approver avatars */
+.navatars{display:flex;gap:-4px;margin-top:7px;align-items:center}
+.navatar{
+  width:22px;height:22px;border-radius:50%;
+  border:2px solid #fff;
+  object-fit:cover;margin-right:-5px;flex-shrink:0;
+  background:#D0CEC9;
+}
+.navatar-initials{
+  width:22px;height:22px;border-radius:50%;
+  border:2px solid #fff;
+  background:#3D5A73;color:#fff;
+  font-size:8px;font-weight:700;
+  display:flex;align-items:center;justify-content:center;
+  margin-right:-5px;flex-shrink:0;
+}
+.navatar-label{font-size:9.5px;color:#B8B5B0;margin-left:10px}
+
+.node-alt{
+  position:absolute;width:200px;
+  background:#FEF8F8;border:1.5px solid #F0D5D5;border-radius:8px;
+  padding:8px 11px;
+}
+.nalt-lbl {font-size:8.5px;font-weight:700;letter-spacing:.1em;color:#BE1E2D;text-transform:uppercase;margin-bottom:2px}
+.nalt-ttl {font-size:11px;font-weight:600;color:#3A3A38;margin-bottom:2px;line-height:1.3}
+.nalt-why {font-size:10px;color:#9B9B9B}
+
+.summary{
+  background:#fff;border-top:1px solid #E5E3DE;
+  padding:13px 24px;display:flex;align-items:center;gap:0;flex-shrink:0;
+}
+.sum-text{
+  flex:1;font-size:11.5px;color:#6B6B6B;line-height:1.55;
+  padding-right:24px;border-right:1px solid #E5E3DE;
+}
+.sum-stat{text-align:center;padding:0 24px;border-right:1px solid #E5E3DE}
+.sum-num  {font-size:22px;font-weight:700;color:#1A1A1A}
+.sum-lbl  {font-size:10.5px;color:#9B9B9B;margin-top:1px}
+.sum-donut{padding-left:24px;display:flex;align-items:center;gap:14px}
+.donut-txt{font-size:11.5px;color:#6B6B6B;line-height:1.6}
+.donut-pct{font-size:17px;font-weight:700;color:#2D6B3D;display:block}
+
+/* Detail drawer */
+.drawer{
+  position:fixed;top:0;right:-360px;width:340px;height:100%;
+  background:#fff;border-left:1px solid #E0DDD8;
+  box-shadow:-4px 0 20px rgba(0,0,0,0.10);
+  display:flex;flex-direction:column;
+  transition:right .22s cubic-bezier(.4,0,.2,1);
+  z-index:100;overflow:hidden;
+}
+.drawer.open{right:0}
+.drawer-header{
+  padding:16px 16px 12px;border-bottom:1px solid #E5E3DE;
+  display:flex;align-items:flex-start;gap:8px;
+}
+.drawer-id{font-size:9.5px;font-weight:700;letter-spacing:.1em;color:#9B9B9B;margin-bottom:2px}
+.drawer-title{font-size:14px;font-weight:700;color:#1A1A1A;line-height:1.3;flex:1}
+.drawer-close{
+  background:none;border:none;cursor:pointer;
+  font-size:15px;color:#9B9B9B;padding:2px;flex-shrink:0;
+  line-height:1;
+}
+.drawer-close:hover{color:#1A1A1A}
+.drawer-body{flex:1;overflow-y:auto;padding:14px 16px}
+.drawer-section{margin-bottom:16px}
+.drawer-section-lbl{
+  font-size:9.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+  color:#9B9B9B;margin-bottom:7px;
+}
+.drawer-decision-text{
+  font-size:12.5px;color:#1A1A1A;line-height:1.5;
+  background:#F7F8FA;border-radius:6px;padding:9px 11px;
+}
+.drawer-rationale{font-size:12px;color:#4A4A48;line-height:1.5}
+.drawer-status-chip{
+  display:inline-block;font-size:10.5px;font-weight:600;
+  padding:3px 9px;border-radius:20px;
+}
+.chip-closed{background:#EAF3EC;color:#2D6B3D}
+.chip-inprog{background:#FEF8EC;color:#C17817}
+.chip-open  {background:#EBF0F8;color:#3B5B8C}
+
+/* Signatory row */
+.sig-row{display:flex;align-items:center;gap:9px;margin-bottom:7px}
+.sig-av{width:28px;height:28px;border-radius:50%;object-fit:cover;background:#D0CEC9}
+.sig-av-ini{
+  width:28px;height:28px;border-radius:50%;
+  background:#3D5A73;color:#fff;
+  font-size:9px;font-weight:700;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+}
+.sig-name{font-size:12px;font-weight:600;color:#1A1A1A}
+.sig-role{font-size:10.5px;color:#9B9B9B}
+
+/* Document row */
+.doc-row{
+  display:flex;align-items:center;gap:9px;
+  padding:7px 9px;border:1px solid #E5E3DE;border-radius:6px;
+  margin-bottom:6px;cursor:pointer;
+}
+.doc-row:last-child{margin-bottom:0}
+.doc-row:hover{background:#F7F8FA}
+.doc-type{
+  font-size:8.5px;font-weight:700;letter-spacing:.05em;
+  padding:2px 6px;border-radius:3px;background:#E5E3DE;color:#4A4A48;
+  flex-shrink:0;
+}
+.doc-name{font-size:12px;color:#1A1A1A;flex:1}
+.doc-arrow{font-size:10px;color:#C0BCB8}
+
+/* Notes */
+.drawer-notes{font-size:12px;color:#4A4A48;line-height:1.5;font-style:italic}
+</style>
+</head>
+<body>
+
+<div class="scroll-area" id="sa">
+<div class="flow-wrap">
+
+<!-- Connection layer -->
+<svg class="conn" width="2230" height="490">
+<defs>
+  <marker id="ag" markerWidth="7" markerHeight="7" refX="5" refY="3.5" orient="auto">
+    <path d="M0,0 L0,7 L7,3.5 Z" fill="#2D6B3D"/>
+  </marker>
+  <marker id="aa" markerWidth="7" markerHeight="7" refX="5" refY="3.5" orient="auto">
+    <path d="M0,0 L0,7 L7,3.5 Z" fill="#C17817"/>
+  </marker>
+  <marker id="ar" markerWidth="7" markerHeight="7" refX="5" refY="3.5" orient="auto">
+    <path d="M0,0 L0,7 L7,3.5 Z" fill="#BE1E2D"/>
+  </marker>
+</defs>
+
+<!-- Upper main chain (green) -->
+<path d="M250,85 C275,85 275,85 300,85"        stroke="#2D6B3D" stroke-width="2" fill="none" marker-end="url(#ag)"/>
+<path d="M520,85 C545,85 545,85 570,85"        stroke="#2D6B3D" stroke-width="2" fill="none" marker-end="url(#ag)"/>
+<path d="M790,85 C945,85 945,85 1100,85"       stroke="#2D6B3D" stroke-width="2" fill="none" marker-end="url(#ag)"/>
+<path d="M1320,85 C1345,85 1345,85 1370,85"    stroke="#2D6B3D" stroke-width="2" fill="none" marker-end="url(#ag)"/>
+<path d="M1590,85 C1615,85 1615,85 1640,85"    stroke="#2D6B3D" stroke-width="2" fill="none" marker-end="url(#ag)"/>
+<path d="M1860,85 C1885,85 1885,85 1910,85"    stroke="#C17817" stroke-width="2" fill="none" marker-end="url(#aa)"/>
+
+<!-- D-001 branches to engineering path -->
+<path d="M140,150 C140,195 410,195 410,230"    stroke="#2D6B3D" stroke-width="2" fill="none" marker-end="url(#ag)"/>
+
+<!-- Lower engineering chain -->
+<path d="M520,295 C545,295 545,295 570,295"    stroke="#2D6B3D" stroke-width="2" fill="none" marker-end="url(#ag)"/>
+<path d="M790,295 C815,295 815,295 840,295"    stroke="#2D6B3D" stroke-width="2" fill="none" marker-end="url(#ag)"/>
+<!-- D-008 merges up into D-011 -->
+<path d="M1060,295 C1085,295 1210,220 1210,150" stroke="#2D6B3D" stroke-width="2" fill="none" marker-end="url(#ag)"/>
+
+<!-- Rejected alternatives (dashed red) -->
+<path d="M680,150 C680,275 680,275 680,400"     stroke="#BE1E2D" stroke-width="1.5" fill="none" stroke-dasharray="5,3" marker-end="url(#ar)"/>
+<path d="M1210,150 C1210,275 1210,275 1210,400" stroke="#BE1E2D" stroke-width="1.5" fill="none" stroke-dasharray="5,3" marker-end="url(#ar)"/>
+<path d="M1750,150 C1750,275 1750,275 1750,400" stroke="#BE1E2D" stroke-width="1.5" fill="none" stroke-dasharray="5,3" marker-end="url(#ar)"/>
+</svg>
+
+<!-- Upper row -->
+
+<div class="node closed" style="left:30px;top:20px" onclick="openDrawer('D001')">
+  <div class="node-hd"><span class="ndot"></span><span class="nid">D-001</span><span class="ndate">Jan 2025</span></div>
+  <div class="ntitle">Platform Selection</div>
+  <div class="ndec">Autoinjector — SHL Molly 1.0 mL platform chosen over pen injector</div>
+  <div class="nmeta">Closed Jan 2025 · Unanimous</div>
+  <div class="navatars">
+    <img class="navatar" src="img/john_burke.jpg" title="John Burke">
+    <img class="navatar" src="img/tom_grant.jpg" title="Tom Grant">
+    <span class="navatar-label">Signed off</span>
+  </div>
+</div>
+
+<div class="node closed" style="left:300px;top:20px" onclick="openDrawer('D002')">
+  <div class="node-hd"><span class="ndot"></span><span class="nid">D-002</span><span class="ndate">Feb 2025</span></div>
+  <div class="ntitle">Drug Volume</div>
+  <div class="ndec">1.0 mL cartridge confirmed with Gilead formulation team at DR1</div>
+  <div class="nmeta">Closed Feb 2025 · DR1 gate</div>
+  <div class="navatars">
+    <img class="navatar" src="img/john_burke.jpg" title="John Burke">
+    <div class="navatar-initials" title="Mei Lin Tan">ML</div>
+    <span class="navatar-label">Signed off</span>
+  </div>
+</div>
+
+<div class="node closed" style="left:570px;top:20px" onclick="openDrawer('D003')">
+  <div class="node-hd"><span class="ndot"></span><span class="nid">D-003</span><span class="ndate">Mar 2025</span></div>
+  <div class="ntitle">Activation Mechanism</div>
+  <div class="ndec">Push-button cap actuation — cap-off route rejected on HF data</div>
+  <div class="nmeta">Closed Mar 2025 · DR1 gate</div>
+  <div class="navatars">
+    <img class="navatar" src="img/tom_grant.jpg" title="Tom Grant">
+    <div class="navatar-initials" title="Anita Devereux">AD</div>
+    <span class="navatar-label">Signed off</span>
+  </div>
+</div>
+
+<div class="node closed" style="left:1100px;top:20px" onclick="openDrawer('D011')">
+  <div class="node-hd"><span class="ndot"></span><span class="nid">D-011</span><span class="ndate">Feb 2026</span></div>
+  <div class="ntitle">Electronics Scope</div>
+  <div class="ndec">Digital connectivity deferred to V2 — V1 remains a passive device</div>
+  <div class="nmeta">Closed Feb 2026 · DR3 gate</div>
+  <div class="navatars">
+    <img class="navatar" src="img/john_burke.jpg" title="John Burke">
+    <div class="navatar-initials" title="Anita Devereux">AD</div>
+    <span class="navatar-label">Signed off</span>
+  </div>
+</div>
+
+<div class="node closed" style="left:1370px;top:20px" onclick="openDrawer('D012')">
+  <div class="node-hd"><span class="ndot"></span><span class="nid">D-012</span><span class="ndate">Apr 2026</span></div>
+  <div class="ntitle">Spring Force Tolerance</div>
+  <div class="ndec">±3% allowable — tighter than SHL standard; critical for dose accuracy</div>
+  <div class="nmeta">Closed Apr 2026 · Unanimous</div>
+  <div class="navatars">
+    <img class="navatar" src="img/tom_grant.jpg" title="Tom Grant">
+    <img class="navatar" src="img/emily_morley.jpg" title="Emily Morley">
+    <img class="navatar" src="img/louis_decleyn.jpg" title="Louis DeCleyn">
+    <span class="navatar-label">Signed off</span>
+  </div>
+</div>
+
+<div class="node inprog" style="left:1640px;top:20px" onclick="openDrawer('D014')">
+  <div class="node-hd"><span class="ndot"></span><span class="nid">D-014</span><span class="ndate">May 2026</span></div>
+  <div class="ntitle">Needle Shield Material</div>
+  <div class="ndec">Steel RNS confirmed; polymer shield withdrawn on permeation data</div>
+  <div class="nmeta">In progress — awaiting Gilead sign-off</div>
+  <div class="navatars">
+    <img class="navatar" src="img/tom_grant.jpg" title="Tom Grant">
+    <div class="navatar-initials" title="Mei Lin Tan — pending">ML</div>
+    <span class="navatar-label">Pending Gilead</span>
+  </div>
+</div>
+
+<div class="node open" style="left:1910px;top:20px" onclick="openDrawer('D013')">
+  <div class="node-hd"><span class="ndot"></span><span class="nid">D-013</span><span class="ndate">Jun 2026</span></div>
+  <div class="ntitle">Shelf-Life Target</div>
+  <div class="ndec">36-month target proposed — accelerated stability data review in progress</div>
+  <div class="nmeta">Open — stability data pending</div>
+  <div class="navatars">
+    <img class="navatar" src="img/john_burke.jpg" title="John Burke">
+    <span class="navatar-label">No sign-off yet</span>
+  </div>
+</div>
+
+<!-- Lower row: engineering branch -->
+
+<div class="node closed" style="left:300px;top:230px" onclick="openDrawer('D005')">
+  <div class="node-hd"><span class="ndot"></span><span class="nid">D-005</span><span class="ndate">Jul 2025</span></div>
+  <div class="ntitle">Needle Retraction</div>
+  <div class="ndec">Automatic passive retraction post-injection — ISO 23908 compliant</div>
+  <div class="nmeta">Closed Jul 2025 · DR2 gate</div>
+  <div class="navatars">
+    <img class="navatar" src="img/tom_grant.jpg" title="Tom Grant">
+    <img class="navatar" src="img/emily_morley.jpg" title="Emily Morley">
+    <span class="navatar-label">Signed off</span>
+  </div>
+</div>
+
+<div class="node closed" style="left:570px;top:230px" onclick="openDrawer('D006')">
+  <div class="node-hd"><span class="ndot"></span><span class="nid">D-006</span><span class="ndate">Sep 2025</span></div>
+  <div class="ntitle">Spring Type</div>
+  <div class="ndec">Stainless steel leaf spring — coil spring rejected on cycle life data</div>
+  <div class="nmeta">Closed Sep 2025 · Engineering review</div>
+  <div class="navatars">
+    <img class="navatar" src="img/tom_grant.jpg" title="Tom Grant">
+    <img class="navatar" src="img/emily_morley.jpg" title="Emily Morley">
+    <span class="navatar-label">Signed off</span>
+  </div>
+</div>
+
+<div class="node closed" style="left:840px;top:230px" onclick="openDrawer('D008')">
+  <div class="node-hd"><span class="ndot"></span><span class="nid">D-008</span><span class="ndate">Jan 2026</span></div>
+  <div class="ntitle">Primary Packaging</div>
+  <div class="ndec">1 mL long cartridge — Schott vendor locked; alt. suppliers de-scoped</div>
+  <div class="nmeta">Closed Jan 2026 · DR3 gate</div>
+  <div class="navatars">
+    <img class="navatar" src="img/louis_decleyn.jpg" title="Louis DeCleyn">
+    <img class="navatar" src="img/john_burke.jpg" title="John Burke">
+    <span class="navatar-label">Signed off</span>
+  </div>
+</div>
+
+<!-- Rejected alternatives -->
+<div class="node-alt" style="left:570px;top:400px">
+  <div class="nalt-lbl">Rejected</div>
+  <div class="nalt-ttl">Cap-off Activation</div>
+  <div class="nalt-why">Higher contamination risk; HF study data unfavourable</div>
+</div>
+
+<div class="node-alt" style="left:1100px;top:400px">
+  <div class="nalt-lbl">Rejected</div>
+  <div class="nalt-ttl">Electronics in V1</div>
+  <div class="nalt-why">+£280k tooling; 14-week schedule impact to DV timeline</div>
+</div>
+
+<div class="node-alt" style="left:1640px;top:400px">
+  <div class="nalt-lbl">Rejected</div>
+  <div class="nalt-ttl">Polymer Needle Shield</div>
+  <div class="nalt-why">Permeation risk confirmed; accelerated stability data failed</div>
+</div>
+
+</div><!-- /flow-wrap -->
+</div><!-- /scroll-area -->
+
+<!-- Summary panel -->
+<div class="summary">
+  <div class="sum-text">
+    <strong>Key decisions to date:</strong> Autoinjector platform (SHL Molly, 1.0 mL) · Push-button cap activation · Auto-retract passive needle safety · Stainless steel leaf spring at ±3% force tolerance · Electronics scope deferred to V2 device · Steel RNS needle shield confirmed pending Gilead sign-off · Shelf-life 36-month target under accelerated stability review.
+  </div>
+  <div class="sum-stat">
+    <div class="sum-num">2</div>
+    <div class="sum-lbl">Open Decisions</div>
+  </div>
+  <div class="sum-stat">
+    <div class="sum-num">8</div>
+    <div class="sum-lbl">Closed Decisions</div>
+  </div>
+  <div class="sum-donut">
+    <svg width="56" height="56" viewBox="0 0 56 56">
+      <circle cx="28" cy="28" r="20" fill="none" stroke="#F0EDE8" stroke-width="7"/>
+      <circle cx="28" cy="28" r="20" fill="none" stroke="#2D6B3D" stroke-width="7"
+        stroke-dasharray="100.5 25.1" transform="rotate(-90 28 28)"/>
+      <text x="28" y="32" text-anchor="middle" font-size="10" font-weight="700" fill="#1A1A1A">80%</text>
+    </svg>
+    <div class="donut-txt">
+      <span class="donut-pct">Resolved</span>
+      of all programme decisions
+    </div>
+  </div>
+</div>
+
+<!-- Detail drawer -->
+<div class="drawer" id="drawer">
+  <div class="drawer-header">
+    <div style="flex:1">
+      <div class="drawer-id" id="dr-id"></div>
+      <div class="drawer-title" id="dr-title"></div>
+      <div style="margin-top:6px"><span id="dr-chip" class="drawer-status-chip"></span></div>
+    </div>
+    <button class="drawer-close" onclick="closeDrawer()">✕</button>
+  </div>
+  <div class="drawer-body">
+    <div class="drawer-section">
+      <div class="drawer-section-lbl">Decision</div>
+      <div class="drawer-decision-text" id="dr-dec"></div>
+    </div>
+    <div class="drawer-section">
+      <div class="drawer-section-lbl">Rationale</div>
+      <div class="drawer-rationale" id="dr-rat"></div>
+    </div>
+    <div class="drawer-section" id="dr-sigs-section">
+      <div class="drawer-section-lbl">Signatories</div>
+      <div id="dr-sigs"></div>
+    </div>
+    <div class="drawer-section" id="dr-docs-section">
+      <div class="drawer-section-lbl">Documents</div>
+      <div id="dr-docs"></div>
+    </div>
+    <div class="drawer-section" id="dr-notes-section">
+      <div class="drawer-section-lbl">Notes</div>
+      <div class="drawer-notes" id="dr-notes"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+var sa=document.getElementById('sa');
+var drag=false,sx,sy,sl,st;
+sa.addEventListener('mousedown',function(e){
+  if(e.target.closest('.drawer'))return;
+  drag=true;sx=e.pageX;sy=e.pageY;sl=sa.scrollLeft;st=sa.scrollTop;
+  sa.style.cursor='grabbing';e.preventDefault();
+});
+window.addEventListener('mouseup',function(){drag=false;sa.style.cursor='grab';});
+window.addEventListener('mousemove',function(e){
+  if(!drag)return;
+  sa.scrollLeft=sl-(e.pageX-sx);
+  sa.scrollTop=st-(e.pageY-sy);
+});
+
+var DDATA = {
+  D001:{
+    id:'D-001', title:'Platform Selection', status:'closed', date:'Jan 2025',
+    dec:'SHL Molly 1.0 mL autoinjector platform selected as the primary device platform for Project Sycamore.',
+    rat:'The SHL Molly platform offered the closest dimensional match to Gilead\'s 1.0 mL PFS cartridge and had the strongest existing data package for ISO 11608 compliance. The pen injector alternative was rejected due to user preference data showing 72% preference for autoinjector format in the target HF study population.',
+    sigs:[
+      {name:'John Burke',   role:'Managing Consultant, TC',     photo:'img/john_burke.jpg'},
+      {name:'Tom Grant',    role:'Senior Consultant, TC',       photo:'img/tom_grant.jpg'},
+      {name:'Anita Devereux',role:'Programme Director, Gilead', photo:null, ini:'AD'},
+    ],
+    docs:[
+      {name:'Platform Evaluation Report v1.2', type:'PDF'},
+      {name:'HF Formative Study Summary',      type:'PDF'},
+      {name:'DR1 Decision Log',                type:'Word'},
+    ],
+    notes:'This decision sets the programme baseline. All subsequent engineering decisions derive from the SHL Molly envelope constraints.',
+  },
+  D002:{
+    id:'D-002', title:'Drug Volume', status:'closed', date:'Feb 2025',
+    dec:'1.0 mL drug cartridge volume confirmed. Schott Type 1 glass long cartridge specified as primary packaging.',
+    rat:'Gilead formulation confirmed 1.0 mL as the minimum effective dose volume at DR1. A 0.5 mL variant was evaluated but rejected — it required a different syringe geometry and would have broken platform commonality with the SHL Molly.',
+    sigs:[
+      {name:'John Burke',   role:'Managing Consultant, TC', photo:'img/john_burke.jpg'},
+      {name:'Mei Lin Tan',  role:'QA Director, Gilead',     photo:null, ini:'ML'},
+    ],
+    docs:[
+      {name:'Formulation Briefing — Drug Volume', type:'PDF'},
+      {name:'DR1 Meeting Minutes',                type:'Word'},
+    ],
+    notes:'Volume lock-in also locked the cartridge vendor — Schott agreed preferred supplier terms at DR1.',
+  },
+  D003:{
+    id:'D-003', title:'Activation Mechanism', status:'closed', date:'Mar 2025',
+    dec:'Push-button cap actuation adopted. Cap-off (needle cap removal as activation step) route formally rejected.',
+    rat:'HF formative study Task 2 data showed 4 of 15 participants attempted to re-cap during a mid-injection pause in the cap-off scenario, risking needle-stick injury. Push-button scored significantly better on error frequency and user preference.',
+    sigs:[
+      {name:'Tom Grant',     role:'Senior Consultant, TC',      photo:'img/tom_grant.jpg'},
+      {name:'Anita Devereux',role:'Programme Director, Gilead', photo:null, ini:'AD'},
+      {name:'James Okonkwo', role:'Device Lead, Gilead',        photo:null, ini:'JO'},
+    ],
+    docs:[
+      {name:'HF Formative Study Report — Tasks 1–4', type:'PDF'},
+      {name:'Activation Mechanism Trade Study',       type:'PDF'},
+      {name:'DR1 Action Register — Item A3',          type:'Excel'},
+    ],
+    notes:'The cap-off route rejection is formally documented. Any future reversal would require a full HF re-study at an estimated 12-week and £45k cost.',
+  },
+  D005:{
+    id:'D-005', title:'Needle Retraction', status:'closed', date:'Jul 2025',
+    dec:'Automatic passive needle retraction mechanism adopted. Device classified as ISO 23908 sharps injury prevention compliant.',
+    rat:'Market access requirements in 5 of 7 target territories mandate needle safety features for self-injection devices. Active retraction (spring-loaded on button release) was ruled out on reliability grounds — 3 of 20 development units showed premature retraction under cold-chain storage simulation.',
+    sigs:[
+      {name:'Tom Grant',    role:'Senior Consultant, TC',    photo:'img/tom_grant.jpg'},
+      {name:'Emily Morley', role:'Device Testing, TC',       photo:'img/emily_morley.jpg'},
+    ],
+    docs:[
+      {name:'Needle Safety Mechanism Evaluation', type:'PDF'},
+      {name:'Cold-Chain Reliability Test Report', type:'PDF'},
+      {name:'ISO 23908 Compliance Assessment',    type:'PDF'},
+    ],
+    notes:'Passive retraction adds ~2.8g to device weight. User acceptability confirmed acceptable at ≤3.5g additional mass in HF study.',
+  },
+  D006:{
+    id:'D-006', title:'Spring Type', status:'closed', date:'Sep 2025',
+    dec:'Stainless steel 316L leaf spring specified as the drive spring. Coil spring rejected.',
+    rat:'50,000-cycle fatigue testing of the coil spring showed a 6.2% failure rate at the target pre-load. The leaf spring design achieved 0% failures at 75,000 cycles. The leaf spring also offers a flatter force-displacement curve, improving dose consistency.',
+    sigs:[
+      {name:'Tom Grant',    role:'Senior Consultant, TC', photo:'img/tom_grant.jpg'},
+      {name:'Emily Morley', role:'Device Testing, TC',    photo:'img/emily_morley.jpg'},
+    ],
+    docs:[
+      {name:'Spring Fatigue Test Report v1.0',   type:'PDF'},
+      {name:'Force-Displacement Analysis',       type:'Excel'},
+      {name:'Component Spec — Drive Spring v1',  type:'Drawing'},
+    ],
+    notes:'Spring type links directly to D-012 (force tolerance). The leaf spring geometry is what makes ±3% achievable — a coil spring could not hold that tolerance.',
+  },
+  D008:{
+    id:'D-008', title:'Primary Packaging', status:'closed', date:'Jan 2026',
+    dec:'Schott Type 1 borosilicate glass 1 mL long cartridge selected. Alternative suppliers de-scoped.',
+    rat:'Alternative supplier (Gerresheimer) was evaluated at DR2. Schott offered a validated cartridge format with existing extractables/leachables data for biologic formulations, saving an estimated 9 months of E&L testing. The Gerresheimer cartridge required a modified plunger stopper, introducing an additional qualification activity.',
+    sigs:[
+      {name:'Louis DeCleyn', role:'Quality & DHF, TC',      photo:'img/louis_decleyn.jpg'},
+      {name:'John Burke',    role:'Managing Consultant, TC', photo:'img/john_burke.jpg'},
+      {name:'Mei Lin Tan',   role:'QA Director, Gilead',    photo:null, ini:'ML'},
+    ],
+    docs:[
+      {name:'Primary Packaging Vendor Evaluation', type:'PDF'},
+      {name:'E&L Data Bridging Justification',     type:'PDF'},
+      {name:'Schott Supply Agreement — Summary',   type:'PDF'},
+    ],
+    notes:'Schott lock-in also locked the 1.0 mL volume (D-002). Both decisions are mutually reinforcing.',
+  },
+  D011:{
+    id:'D-011', title:'Electronics Scope', status:'closed', date:'Feb 2026',
+    dec:'Bluetooth dose-logging electronics deferred to V2. V1 Sycamore device specified as fully passive — no PCB, battery, or wireless components.',
+    rat:'Adding connectivity to V1 would require: £280k additional tooling, a 14-week schedule slip to DV start, and a separate IEC 62368 electrical safety qualification. The programme steering committee agreed that the clinical and commercial case for connectivity did not justify the DV timeline risk.',
+    sigs:[
+      {name:'John Burke',    role:'Managing Consultant, TC',     photo:'img/john_burke.jpg'},
+      {name:'Anita Devereux',role:'Programme Director, Gilead',  photo:null, ini:'AD'},
+    ],
+    docs:[
+      {name:'Electronics Scope Trade Study', type:'PDF'},
+      {name:'PSC Decision Memo — Feb 2026',  type:'PDF'},
+      {name:'V2 Connectivity Roadmap v0.1',  type:'Word'},
+    ],
+    notes:'V2 connectivity scope is documented in the product roadmap but is out of scope for this programme. Any V1 reopening is a programme change requiring PSC approval.',
+  },
+  D012:{
+    id:'D-012', title:'Spring Force Tolerance', status:'closed', date:'Apr 2026',
+    dec:'Drive spring pre-load tolerance tightened to ±3% of nominal. SHL\'s standard ±5% tolerance de-specified.',
+    rat:'DV pilot testing showed dose accuracy trending toward the lower specification limit (DSL) with the original ±5% spring tolerance. Monte Carlo analysis of worst-case tolerance stack predicted a 2.1% chance of DSL breach. Tightening to ±3% brings this to 0.05%. Cost impact: ~£18k additional manufacturing cost per batch vs. standard tolerance.',
+    sigs:[
+      {name:'Tom Grant',    role:'Senior Consultant, TC', photo:'img/tom_grant.jpg'},
+      {name:'Emily Morley', role:'Device Testing, TC',    photo:'img/emily_morley.jpg'},
+      {name:'Louis DeCleyn',role:'Quality & DHF, TC',    photo:'img/louis_decleyn.jpg'},
+    ],
+    docs:[
+      {name:'Spring Tolerance Monte Carlo Analysis', type:'PDF'},
+      {name:'DV Pilot Test Report v1.3',             type:'PDF'},
+      {name:'Component Spec — Drive Spring v2.1',    type:'Drawing'},
+      {name:'Cost Impact Assessment — CO-03',        type:'Excel'},
+    ],
+    notes:'This decision is the primary driver of the ~4% budget variance vs. phased plan. The ±3% tolerance drives extra SHL inspection steps which are billed as M&E.',
+  },
+  D014:{
+    id:'D-014', title:'Needle Shield Material', status:'inprog', date:'May 2026',
+    dec:'Stainless steel rigid needle shield (RNS) confirmed as primary material. Polymer (polypropylene) RNS formally rejected.',
+    rat:'Accelerated stability testing at 40°C/75%RH showed measurable moisture vapour transmission through the PP shield within 12 weeks, representing a sterile barrier risk. The steel RNS showed zero transmission at 24 weeks. Steel adds ~1.4p per unit cost but the sterile barrier risk was considered unacceptable for a biologic formulation.',
+    sigs:[
+      {name:'Tom Grant',   role:'Senior Consultant, TC',  photo:'img/tom_grant.jpg'},
+      {name:'Mei Lin Tan', role:'QA Director, Gilead — signature pending', photo:null, ini:'ML'},
+    ],
+    docs:[
+      {name:'RNS Material Evaluation Report v2.0',   type:'PDF'},
+      {name:'Accelerated Stability Test Report v1.1', type:'PDF'},
+      {name:'Sterile Barrier Risk Assessment',        type:'PDF'},
+    ],
+    notes:'Currently in progress — Gilead QA sign-off with Mei Lin Tan pending. DVP protocol cannot be finalised until this decision is formally closed.',
+  },
+  D013:{
+    id:'D-013', title:'Shelf-Life Target', status:'open', date:'Jun 2026',
+    dec:'36-month shelf-life target proposed by Gilead commercial. Current data supports 24 months. Decision pending accelerated stability data review.',
+    rat:'Gilead\'s commercial team requires a 36-month shelf life to support global distribution logistics. Real-time stability data to 24 months is available. The 36-month target requires either real-time data (not available until 2028) or an accelerated stability study. CO-04 change order covers the additional accelerated stability chamber time.',
+    sigs:[
+      {name:'John Burke', role:'Managing Consultant, TC — awaiting data', photo:'img/john_burke.jpg'},
+    ],
+    docs:[
+      {name:'CO-04 Change Order — Shelf-Life Extension', type:'PDF'},
+      {name:'Accelerated Stability Protocol v1.0',       type:'PDF'},
+      {name:'24-Month Stability Data Package',           type:'Excel'},
+    ],
+    notes:'Open decision — cannot be closed until the 6-month accelerated stability readout. Gilead finance approval of CO-04 is required by 30 June 2026 to secure the chamber slot.',
+  },
+};
+
+function openDrawer(id){
+  var d = DDATA[id];
+  if(!d) return;
+  document.getElementById('dr-id').textContent    = d.id;
+  document.getElementById('dr-title').textContent = d.title;
+  var chip = document.getElementById('dr-chip');
+  chip.textContent  = d.status==='closed' ? '✓ Closed' : d.status==='inprog' ? '⏳ In progress' : '⬡ Open';
+  chip.className    = 'drawer-status-chip ' + (d.status==='closed' ? 'chip-closed' : d.status==='inprog' ? 'chip-inprog' : 'chip-open');
+  document.getElementById('dr-dec').textContent = d.dec;
+  document.getElementById('dr-rat').textContent = d.rat;
+
+  // Signatories
+  var sigsEl = document.getElementById('dr-sigs');
+  sigsEl.innerHTML = '';
+  d.sigs.forEach(function(s){
+    var row = document.createElement('div');
+    row.className = 'sig-row';
+    var av;
+    if(s.photo){
+      av = document.createElement('img');
+      av.src = s.photo; av.className = 'sig-av';
+    } else {
+      av = document.createElement('div');
+      av.className = 'sig-av-ini';
+      av.textContent = s.ini || '?';
+    }
+    var info = document.createElement('div');
+    info.innerHTML = '<div class="sig-name">'+s.name+'</div><div class="sig-role">'+s.role+'</div>';
+    row.appendChild(av); row.appendChild(info);
+    sigsEl.appendChild(row);
+  });
+
+  // Documents
+  var docsEl = document.getElementById('dr-docs');
+  docsEl.innerHTML = '';
+  d.docs.forEach(function(doc){
+    var row = document.createElement('div');
+    row.className = 'doc-row';
+    row.innerHTML = '<span class="doc-type">'+doc.type+'</span><span class="doc-name">'+doc.name+'</span><span class="doc-arrow">↗</span>';
+    docsEl.appendChild(row);
+  });
+
+  document.getElementById('dr-notes').textContent = d.notes || '';
+  document.getElementById('drawer').classList.add('open');
+}
+
+function closeDrawer(){
+  document.getElementById('drawer').classList.remove('open');
+}
+
+document.addEventListener('keydown',function(e){
+  if(e.key==='Escape') closeDrawer();
+});
+</script>
+</body>
+</html>

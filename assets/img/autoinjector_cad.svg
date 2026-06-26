@@ -1,0 +1,91 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 240 640" width="200" height="533">
+  <!-- Background -->
+  <rect width="240" height="640" fill="#FAFAF8"/>
+
+  <!-- Title -->
+  <text x="120" y="20" text-anchor="middle" font-family="Helvetica, Arial, sans-serif"
+        font-size="10" fill="#6B6B6B" font-weight="600" letter-spacing="0.08em">SYCAMORE AUTOINJECTOR</text>
+
+  <!-- Part 1: Needle Cap -->
+  <g id="P001">
+    <rect x="82" y="35" width="76" height="58" rx="6" fill="#4A90C4" stroke="white" stroke-width="1.5"/>
+    <text x="120" y="52" text-anchor="middle" font-family="Helvetica" font-size="9" fill="rgba(255,255,255,0.7)">NEEDLE CAP</text>
+    <circle cx="100" cy="68" r="11" fill="rgba(255,255,255,0.25)"/>
+    <text x="100" y="72" text-anchor="middle" font-family="Helvetica" font-size="12" fill="white" font-weight="700">1</text>
+  </g>
+  <!-- Connector -->
+  <line x1="120" y1="93" x2="120" y2="103" stroke="#CCC" stroke-width="1" stroke-dasharray="3,2"/>
+
+  <!-- Part 2: Rigid Needle Shield -->
+  <g id="P002">
+    <rect x="100" y="103" width="40" height="44" rx="3" fill="#9EAAB8" stroke="white" stroke-width="1.5"/>
+    <text x="120" y="117" text-anchor="middle" font-family="Helvetica" font-size="7.5" fill="rgba(255,255,255,0.8)">RNS</text>
+    <circle cx="120" cy="132" r="9" fill="rgba(255,255,255,0.25)"/>
+    <text x="120" y="136" text-anchor="middle" font-family="Helvetica" font-size="11" fill="white" font-weight="700">2</text>
+  </g>
+  <!-- Connector -->
+  <line x1="120" y1="147" x2="120" y2="157" stroke="#CCC" stroke-width="1" stroke-dasharray="3,2"/>
+
+  <!-- Part 3: Outer Housing -->
+  <g id="P003">
+    <rect x="64" y="157" width="152" height="248" rx="8" fill="#5B7FA6" stroke="white" stroke-width="2"/>
+    <text x="84" y="175" text-anchor="start" font-family="Helvetica" font-size="8" fill="rgba(255,255,255,0.7)" font-weight="600">OUTER HOUSING</text>
+    <circle cx="84" cy="195" r="10" fill="rgba(255,255,255,0.2)"/>
+    <text x="84" y="199" text-anchor="middle" font-family="Helvetica" font-size="11" fill="white" font-weight="700">3</text>
+  </g>
+
+  <!-- Part 4: Drug Cartridge (inside housing) -->
+  <g id="P004">
+    <rect x="90" y="167" width="60" height="116" rx="4" fill="#C8E6F5" stroke="#B0D4E8" stroke-width="1"/>
+    <!-- liquid fill -->
+    <rect x="91" y="168" width="58" height="90" rx="3" fill="#A8D4EE" opacity="0.5"/>
+    <text x="120" y="185" text-anchor="middle" font-family="Helvetica" font-size="7" fill="#3D5A73" font-weight="600">DRUG CARTRIDGE</text>
+    <text x="120" y="196" text-anchor="middle" font-family="Helvetica" font-size="7" fill="#3D5A73">1.0 mL PFS</text>
+    <circle cx="120" cy="228" r="10" fill="#3D5A73" opacity="0.7"/>
+    <text x="120" y="232" text-anchor="middle" font-family="Helvetica" font-size="11" fill="white" font-weight="700">4</text>
+  </g>
+
+  <!-- Part 5: Drive Spring -->
+  <g id="P005">
+    <line x1="76" y1="295" x2="206" y2="295" stroke="#8B9DC3" stroke-width="2.5"/>
+    <line x1="80" y1="303" x2="204" y2="303" stroke="#8B9DC3" stroke-width="2.5"/>
+    <line x1="76" y1="311" x2="206" y2="311" stroke="#8B9DC3" stroke-width="2.5"/>
+    <line x1="80" y1="319" x2="204" y2="319" stroke="#8B9DC3" stroke-width="2.5"/>
+    <line x1="76" y1="327" x2="206" y2="327" stroke="#8B9DC3" stroke-width="2.5"/>
+    <text x="174" y="340" text-anchor="middle" font-family="Helvetica" font-size="7" fill="rgba(255,255,255,0.8)">SPRING</text>
+    <circle cx="196" cy="310" r="10" fill="rgba(255,255,255,0.2)"/>
+    <text x="196" y="314" text-anchor="middle" font-family="Helvetica" font-size="11" fill="white" font-weight="700">5</text>
+  </g>
+
+  <!-- Part 6: Plunger Rod -->
+  <g id="P006">
+    <rect x="114" y="290" width="12" height="108" rx="3" fill="#7D8F9B" stroke="white" stroke-width="1"/>
+    <circle cx="200" cy="350" r="10" fill="rgba(255,255,255,0.18)"/>
+    <text x="200" y="354" text-anchor="middle" font-family="Helvetica" font-size="11" fill="white" font-weight="700">6</text>
+  </g>
+
+  <!-- Part 7: Activation Button -->
+  <g id="P007">
+    <rect x="72" y="407" width="136" height="44" rx="6" fill="#3D5A73" stroke="white" stroke-width="2"/>
+    <text x="140" y="423" text-anchor="middle" font-family="Helvetica" font-size="8" fill="rgba(255,255,255,0.8)">ACTIVATION BUTTON</text>
+    <circle cx="100" cy="429" r="10" fill="rgba(255,255,255,0.2)"/>
+    <text x="100" y="433" text-anchor="middle" font-family="Helvetica" font-size="11" fill="white" font-weight="700">7</text>
+  </g>
+  <!-- Connector -->
+  <line x1="120" y1="451" x2="120" y2="461" stroke="#CCC" stroke-width="1" stroke-dasharray="3,2"/>
+
+  <!-- Part 8: End Cap -->
+  <g id="P008">
+    <rect x="64" y="461" width="152" height="38" rx="8" fill="#7D8F9B" stroke="white" stroke-width="2"/>
+    <text x="140" y="477" text-anchor="middle" font-family="Helvetica" font-size="8" fill="rgba(255,255,255,0.8)">END CAP / BASE</text>
+    <circle cx="88" cy="480" r="10" fill="rgba(255,255,255,0.2)"/>
+    <text x="88" y="484" text-anchor="middle" font-family="Helvetica" font-size="11" fill="white" font-weight="700">8</text>
+  </g>
+
+  <!-- Scale bar -->
+  <line x1="80" y1="520" x2="160" y2="520" stroke="#CCC" stroke-width="1"/>
+  <line x1="80" y1="515" x2="80" y2="525" stroke="#CCC" stroke-width="1"/>
+  <line x1="160" y1="515" x2="160" y2="525" stroke="#CCC" stroke-width="1"/>
+  <text x="120" y="535" text-anchor="middle" font-family="Helvetica" font-size="9" fill="#9B9B9B">~155 mm</text>
+  <text x="120" y="555" text-anchor="middle" font-family="Helvetica" font-size="8" fill="#9B9B9B">Exploded schematic — not to scale</text>
+</svg>

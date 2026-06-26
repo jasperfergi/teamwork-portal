@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80" width="80" height="80">
+  <defs>
+    <clipPath id="c-ad"><circle cx="40" cy="40" r="40"/></clipPath>
+  </defs>
+  <circle cx="40" cy="40" r="40" fill="#5C3348"/>
+  <g clip-path="url(#c-ad)">
+    <!-- jacket / body -->
+    <ellipse cx="40" cy="82" rx="30" ry="20" fill="#1C1C2E"/>
+    <!-- collar / blouse -->
+    <path d="M30,68 Q40,62 50,68 L50,82 L30,82Z" fill="#F0EAE0"/>
+    <!-- neck -->
+    <rect x="33" y="52" width="14" height="18" rx="4" fill="#C8855E"/>
+    <!-- head -->
+    <ellipse cx="40" cy="38" rx="17" ry="19" fill="#C8855E"/>
+    <!-- hair — elegant dark updo -->
+    <ellipse cx="40" cy="20" rx="17" ry="8" fill="#1A0A0A"/>
+    <ellipse cx="40" cy="18" rx="11" ry="6" fill="#1A0A0A"/>
+    <!-- bun highlight -->
+    <ellipse cx="40" cy="16" rx="7" ry="5" fill="#2A1010"/>
+    <!-- ear -->
+    <ellipse cx="23" cy="40" rx="3" ry="4" fill="#B87050"/>
+    <ellipse cx="57" cy="40" rx="3" ry="4" fill="#B87050"/>
+    <!-- earring hint -->
+    <circle cx="23" cy="44" r="1.5" fill="#D4AF37"/>
+    <circle cx="57" cy="44" r="1.5" fill="#D4AF37"/>
+    <!-- eyes -->
+    <ellipse cx="33" cy="36" rx="3.5" ry="2.5" fill="#1A0A0A"/>
+    <ellipse cx="47" cy="36" rx="3.5" ry="2.5" fill="#1A0A0A"/>
+    <circle cx="34" cy="35.5" r="1" fill="#fff" opacity="0.6"/>
+    <circle cx="48" cy="35.5" r="1" fill="#fff" opacity="0.6"/>
+    <!-- eyebrows -->
+    <path d="M29,31 Q33,29 37,31" stroke="#1A0A0A" stroke-width="1.5" fill="none"/>
+    <path d="M43,31 Q47,29 51,31" stroke="#1A0A0A" stroke-width="1.5" fill="none"/>
+    <!-- nose -->
+    <path d="M39,40 L38,46 Q40,48 42,46 L41,40" stroke="#A86040" stroke-width="1" fill="none"/>
+    <!-- lips -->
+    <path d="M33,50 Q40,54 47,50" stroke="#A84040" stroke-width="2" fill="none"/>
+    <path d="M35,50 Q40,52 45,50" fill="#C05060" stroke="none"/>
+  </g>
+</svg>

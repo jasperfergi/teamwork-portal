@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Sycamore Milestones</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:-apple-system,"Helvetica Neue",Helvetica,Arial,sans-serif;background:#F7F8FA;color:#1A1A1A;font-size:13px;overflow:hidden;height:100vh}
+.wrap{display:flex;flex-direction:column;height:100%}
+.scroll{overflow-x:auto;overflow-y:hidden;flex-shrink:0;cursor:grab;user-select:none}
+.scroll:active{cursor:grabbing}
+.scroll::-webkit-scrollbar{height:4px}
+.scroll::-webkit-scrollbar-thumb{background:#D0CEC9;border-radius:2px}
+.detail{
+  flex:1;background:#fff;border-top:1px solid #E5E3DE;
+  padding:16px 22px;display:flex;gap:24px;
+  min-height:0;overflow-y:auto;
+}
+.detail-placeholder{color:#9B9B9B;font-size:12.5px;flex:1;text-align:center;padding-top:18px}
+.d-left{flex:1;min-width:0}
+.d-right{width:200px;flex-shrink:0}
+.d-eyebrow{font-size:10px;font-weight:700;letter-spacing:.1em;color:#9B9B9B;margin-bottom:4px}
+.d-name{font-size:16px;font-weight:700;margin-bottom:5px;line-height:1.25}
+.d-date{font-size:12px;color:#6B6B6B;margin-bottom:8px;display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.d-pill{display:inline-flex;align-items:center;gap:4px;border-radius:999px;padding:3px 9px;font-size:10.5px;font-weight:700}
+.d-dot{width:6px;height:6px;border-radius:50%;display:inline-block}
+.d-desc{font-size:13px;color:#4A4A48;line-height:1.6}
+.d-links-label{font-size:10px;font-weight:700;letter-spacing:.08em;color:#9B9B9B;text-transform:uppercase;margin-bottom:8px;margin-top:4px}
+.d-link{display:flex;align-items:center;gap:7px;padding:7px 10px;background:#E3EAF2;border-radius:6px;font-size:12px;font-weight:600;color:#003057;text-decoration:none;margin-bottom:6px;transition:background .13s}
+.d-link:hover{background:#C8D8E8;text-decoration:none}
+svg{display:block}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="scroll" id="scroll">
+    <svg id="chart"></svg>
+  </div>
+  <div class="detail" id="detail">
+    <p class="detail-placeholder">Click any milestone to see details and file links.</p>
+  </div>
+</div>
+<script>
+var MS=[
+  {id:'M1',name:'Design Freeze',date:'2026-03-06',status:'complete',
+   desc:'All design outputs locked. V1 device configuration confirmed for Sycamore autoinjector. Design Verification authorised to commence following DR3.',
+   links:[{l:'DOS v2.1 — approved specification',p:'Quality/Sycamore_DVP_RevC.docx'},{l:'Design Review 3 minutes',p:'PM/DesignReview3_Minutes.pptx'}]},
+  {id:'M2',name:'DV Protocol Approval',date:'2026-06-25',status:'at_risk',
+   desc:'DVP Rev C submitted 12 June 2026. Awaiting Gilead QA sign-off — 10 days with Gilead against a 5-day review target. Current critical path item.',
+   links:[{l:'DVP Rev C — awaiting approval',p:'Quality/Sycamore_DVP_RevC.docx'},{l:'HF Validation Protocol v4',p:'Engineering/HF_Validation_Protocol_v4.docx'}]},
+  {id:'M3',name:'Spring Force WP Complete',date:'2026-07-11',status:'on_track',
+   desc:'Spring force tolerance DV work package (WP1.2) signed off. Covers 180 N/m ±3% acceptance criteria tightened under Decision D-012.',
+   links:[{l:'Spring Force DV Test Record',p:'Engineering/Spring_Force_DV_TestRecord.xlsx'},{l:'D-012 — spring tolerance decision',p:'PM/Decisions_Register.xlsx'}]},
+  {id:'M4',name:'Sterile Barrier Complete',date:'2026-07-31',status:'on_track',
+   desc:'Sterile barrier integrity testing (WP1.6). Blocked on sterilisation dose mapping report from Gilead\'s contract steriliser.',
+   links:[{l:'Sterile Barrier Dose Mapping request',p:'Quality/Sterile_Barrier_DoseMapping.pdf'},{l:'Risk file — RISK-027',p:'Quality/Sycamore_RiskFile_ISO14971_v9.xlsx'}]},
+  {id:'M5',name:'HF Validation Study',date:'2026-08-14',status:'on_track',
+   desc:'Human Factors validation study execution. Contingent on DVP Rev C approval and HF protocol sign-off from Gilead.',
+   links:[{l:'HF Validation Study Protocol v4',p:'Engineering/HF_Validation_Protocol_v4.docx'},{l:'DR4 DV Readiness presentation',p:'Presentations/DR4_DV_Readiness.pptx'}]},
+  {id:'M6',name:'DV Execution Complete',date:'2026-08-21',status:'on_track',
+   desc:'All DV test work packages completed. Spring force, needle insertion, dose accuracy, sterile barrier, and shipping simulation all signed off.',
+   links:[{l:'Dose Accuracy DV Protocol v2',p:'Engineering/Dose_Accuracy_Protocol_v2.docx'},{l:'Shipping Simulation Protocol',p:'Engineering/Shipping_Simulation_Protocol.docx'}]},
+  {id:'M7',name:'Design Review 5',date:'2026-09-18',status:'on_track',
+   desc:'DV exit gate design review. All test reports must be completed and signed off to pass this gate. Presentation to Gilead QA and senior management.',
+   links:[{l:'DR5 agenda (TBC)',p:'PM/DesignReview5_Agenda.pptx'},{l:'Programme plan — DV section',p:'PM/DesignReview4_Minutes.pptx'}]},
+  {id:'M8',name:'DHF Compilation',date:'2026-11-14',status:'not_started',
+   desc:'Design History File compilation complete. All DV test reports, risk file, design outputs, and traceability matrix consolidated for regulatory submission.',
+   links:[{l:'DHF DV section (draft)',p:'Quality/Sycamore_DHF_DV_Section.docx'},{l:'ISO 14971 Risk File v9',p:'Quality/Sycamore_RiskFile_ISO14971_v9.xlsx'}]},
+  {id:'M9',name:'Shelf-life Study Complete',date:'2026-12-10',status:'not_started',
+   desc:'36-month real-time shelf-life study interim read (12-month accelerated). CO-04 shelf-life extension arm starts July 2026 subject to Gilead finance approval.',
+   links:[{l:'Shelf-life Protocol — CO-04 arm',p:'Quality/Shelf_Life_Protocol_CO04.docx'},{l:'CO-04 change order',p:'Finance/CO-04_ShelfLife_Extension.pdf'}]},
+  {id:'M10',name:'Regulatory Submission',date:'2027-02-01',status:'not_started',
+   desc:'Target date for CE marking submission under EU MDR 2017/745. DHF compilation complete, all test reports signed, notified body pre-submission meeting held.',
+   links:[{l:'Regulatory strategy document',p:'Quality/Sycamore_RegulatoryStrategy.docx'},{l:'Pre-submission meeting notes',p:'Quality/Notified_Body_PreSub_Notes.docx'}]},
+];
+
+var MODE=new URLSearchParams(window.location.search).get('mode')||'team';
+var DONE_COLOR=MODE==='client'?'#BE1E2D':'#1A6DB5';
+var STATUS={
+  complete:    {color:DONE_COLOR,     label:'Complete'},
+  on_track:    {color:DONE_COLOR,     label:'On track'},
+  at_risk:     {color:'#C17817',      label:'At risk'},
+  not_started: {color:'#9B9B9B',      label:'Not started'},
+};
+
+var SP='https://gilead-team.sharepoint.com/sites/Sycamore/';
+var TODAY=new Date('2026-06-25T00:00:00');
+
+function pd(s){return new Date(s+'T00:00:00');}
+function fmt(s){var d=pd(s),mo=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];return d.getDate()+' '+mo[d.getMonth()]+' '+d.getFullYear();}
+
+// Layout constants
+var PAD_L=60,PAD_R=80;
+var H=190;               // total SVG height (reduced to leave room for detail panel)
+var TL_Y=105;            // y of the timeline baseline
+var MIN_GAP=170;         // minimum px between milestone x positions
+var ABOVE_Y=18;          // label top row (above line)
+var BELOW_Y=148;         // label bottom row (below line)
+var STEM_LEN=46;
+var DOT_R=7;
+
+var minDate=new Date('2026-01-01T00:00:00');
+var maxDate=new Date('2027-06-01T00:00:00');
+var span=maxDate-minDate;
+
+var CANVAS_W=2000;
+function propX(dateStr){return PAD_L+((pd(dateStr)-minDate)/span)*(CANVAS_W-PAD_L-PAD_R);}
+
+var positions=MS.map(function(m){return propX(m.date);});
+for(var i=1;i<positions.length;i++){
+  if(positions[i]-positions[i-1]<MIN_GAP) positions[i]=positions[i-1]+MIN_GAP;
+}
+var totalW=Math.max(CANVAS_W,positions[positions.length-1]+PAD_R+20);
+
+var svg=document.getElementById('chart');
+svg.setAttribute('width',totalW);
+svg.setAttribute('height',H);
+
+var NS='http://www.w3.org/2000/svg';
+function el(tag,a){var e=document.createElementNS(NS,tag);for(var k in a)e.setAttribute(k,a[k]);return e;}
+function txt(content,a){var e=el('text',a);e.textContent=content;return e;}
+
+// Month tick marks
+var TICK_Y=TL_Y+18;
+var d=new Date('2026-02-01T00:00:00');
+var mo=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+while(d<maxDate){
+  var tx=PAD_L+((d-minDate)/span)*(CANVAS_W-PAD_L-PAD_R);
+  if(tx>PAD_L&&tx<totalW-PAD_R){
+    svg.appendChild(el('line',{x1:tx,y1:TL_Y+2,x2:tx,y2:TL_Y+10,stroke:'#D0CEC9','stroke-width':'1'}));
+    var label=d.getMonth()===0?
+      txt(mo[d.getMonth()]+' '+d.getFullYear(),{x:tx,'text-anchor':'middle',y:TICK_Y+14,fill:'#9B9B9B','font-size':'10','font-weight':'600'}):
+      txt(mo[d.getMonth()],{x:tx,'text-anchor':'middle',y:TICK_Y+14,fill:'#B0ADA8','font-size':'9.5'});
+    svg.appendChild(label);
+  }
+  d=new Date(d.getFullYear(),d.getMonth()+1,1);
+}
+
+// Timeline baseline
+svg.appendChild(el('line',{x1:PAD_L-10,y1:TL_Y,x2:totalW-PAD_R+10,y2:TL_Y,stroke:'#D0CEC9','stroke-width':'2'}));
+
+// Today marker
+var todayX=PAD_L+((TODAY-minDate)/span)*(CANVAS_W-PAD_L-PAD_R);
+svg.appendChild(el('line',{x1:todayX,y1:20,x2:todayX,y2:TL_Y+28,stroke:'#1A1A1A','stroke-width':'1.5','stroke-dasharray':'3,2','opacity':'0.4'}));
+svg.appendChild(txt('Today',{x:todayX,'text-anchor':'middle',y:14,fill:'#6B6B6B','font-size':'9.5','font-weight':'700','letter-spacing':'0.06em'}));
+
+// Draw milestones
+var selectedId=null;
+MS.forEach(function(m,i){
+  var x=positions[i];
+  var above=i%2===0;
+  var sc=STATUS[m.status]||STATUS.on_track;
+  var color=sc.color;
+
+  var g=el('g',{cursor:'pointer',id:'g-'+m.id});
+
+  var stemTop,stemBot;
+  if(above){stemTop=ABOVE_Y+26;stemBot=TL_Y-DOT_R-2;}
+  else{stemTop=TL_Y+DOT_R+2;stemBot=BELOW_Y;}
+  g.appendChild(el('line',{x1:x,y1:stemTop,x2:x,y2:stemBot,stroke:color,'stroke-width':'1.5','opacity':'0.5'}));
+
+  var circle=el('circle',{cx:x,cy:TL_Y,r:DOT_R,fill:color,stroke:'#fff','stroke-width':'2.5'});
+  g.appendChild(circle);
+
+  var LABEL_H=26,LABEL_PAD=10;
+  var approxW=m.name.length*6.0+LABEL_PAD*2;
+  var lx=x-approxW/2, ly=above?(ABOVE_Y-2):(BELOW_Y+2);
+  g.appendChild(el('rect',{x:lx,y:ly,width:approxW,height:LABEL_H,rx:'13',fill:color}));
+  g.appendChild(txt(m.name,{x:x,'text-anchor':'middle',y:ly+LABEL_H/2+4,fill:'#fff','font-size':'10.5','font-weight':'600'}));
+
+  var hit=el('rect',{x:x-80,y:above?ABOVE_Y-10:TL_Y-10,width:160,
+    height:above?(TL_Y-ABOVE_Y+DOT_R+10):(BELOW_Y+LABEL_H+10-TL_Y+DOT_R),
+    fill:'transparent',cursor:'pointer'});
+  g.appendChild(hit);
+
+  g.addEventListener('mouseenter',function(){circle.setAttribute('r',DOT_R+2);});
+  g.addEventListener('mouseleave',function(){if(selectedId!==m.id)circle.setAttribute('r',DOT_R);});
+  g.addEventListener('click',function(){
+    if(selectedId){var prev=document.getElementById('g-'+selectedId);if(prev)prev.querySelector('circle').setAttribute('r',DOT_R);}
+    selectedId=m.id;
+    circle.setAttribute('r',DOT_R+3);
+    showDetail(m,color,sc.label);
+  });
+
+  svg.appendChild(g);
+});
+
+function showDetail(m,color,statusLabel){
+  var links=m.links.map(function(l){
+    return '<a class="d-link" href="'+SP+l.p+'" target="_blank"><span>📄</span><span>'+l.l+'</span></a>';
+  }).join('');
+  document.getElementById('detail').innerHTML=
+    '<div class="d-left">'+
+      '<div class="d-eyebrow">MILESTONE · '+m.id+'</div>'+
+      '<div class="d-name">'+m.name+'</div>'+
+      '<div class="d-date">'+fmt(m.date)+
+        '&nbsp;<span class="d-pill" style="background:'+color+'22;color:'+color+'">'+
+          '<span class="d-dot" style="background:'+color+'"></span>'+statusLabel+
+        '</span>'+
+      '</div>'+
+      '<div class="d-desc">'+m.desc+'</div>'+
+    '</div>'+
+    '<div class="d-right">'+
+      '<div class="d-links-label">Related Files</div>'+links+
+    '</div>';
+}
+
+// Scroll to today
+var s=document.getElementById('scroll');
+s.scrollLeft=Math.max(0,todayX-s.clientWidth*0.3);
+
+// Drag to scroll
+var drag=false,sx,sl;
+s.addEventListener('mousedown',function(e){drag=true;sx=e.pageX;sl=s.scrollLeft;s.style.cursor='grabbing';});
+s.addEventListener('mouseleave',function(){drag=false;s.style.cursor='grab';});
+s.addEventListener('mouseup',function(){drag=false;s.style.cursor='grab';});
+s.addEventListener('mousemove',function(e){if(!drag)return;e.preventDefault();s.scrollLeft=sl-(e.pageX-sx);});
+s.addEventListener('wheel',function(e){e.preventDefault();s.scrollLeft+=e.deltaY;},{passive:false});
+</script>
+</body>
+</html>

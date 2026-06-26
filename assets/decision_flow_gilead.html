@@ -1,0 +1,578 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Gilead Approvals Flow</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  font-family:-apple-system,"Helvetica Neue",Helvetica,Arial,sans-serif;
+  background:#F7F8FA;color:#1A1A1A;font-size:13px;
+  display:flex;flex-direction:column;height:100vh;overflow:hidden;
+}
+.scroll-area{
+  flex:1;overflow:auto;cursor:grab;user-select:none;
+  padding:24px 30px 16px;min-height:0;
+}
+.scroll-area:active{cursor:grabbing}
+.scroll-area::-webkit-scrollbar{height:4px;width:4px}
+.scroll-area::-webkit-scrollbar-thumb{background:#D0CEC9;border-radius:2px}
+.flow-wrap{position:relative;width:2000px;height:390px}
+svg.conn{position:absolute;top:0;left:0;pointer-events:none;overflow:visible}
+
+.node{
+  position:absolute;width:220px;
+  background:#fff;border:1.5px solid #E0DDD8;border-radius:10px;
+  padding:11px 13px 10px;
+  box-shadow:0 1px 4px rgba(0,0,0,0.06);
+  cursor:pointer;transition:box-shadow .15s,border-color .15s;
+}
+.node:hover{box-shadow:0 3px 10px rgba(0,0,0,0.12);border-color:#C0BDB8}
+.node.approved  {border-top:3px solid #2D6B3D}
+.node.pending   {border-top:3px solid #C17817}
+.node.critical  {border-top:3px solid #d63346}
+.node.notstarted{border-top:3px solid #C8C6C2}
+
+.node-hd{display:flex;align-items:center;gap:6px;margin-bottom:5px}
+.ndot{width:7px;height:7px;border-radius:50%;flex-shrink:0}
+.approved   .ndot{background:#2D6B3D}
+.pending    .ndot{background:#C17817}
+.critical   .ndot{background:#d63346}
+.notstarted .ndot{background:#C8C6C2}
+.nid   {font-size:9.5px;font-weight:700;letter-spacing:.08em;color:#9B9B9B}
+.ndate {font-size:9px;color:#C0BCB8;margin-left:auto}
+.ntitle{font-size:12px;font-weight:700;color:#1A1A1A;margin-bottom:3px;line-height:1.3}
+.ndec  {font-size:11px;color:#4A4A48;margin-bottom:6px;line-height:1.35}
+.nmeta {font-size:9.5px;color:#B8B5B0}
+.critical .ntitle{color:#d63346}
+
+/* Approver avatars */
+.navatars{display:flex;align-items:center;margin-top:7px}
+.navatar{
+  width:22px;height:22px;border-radius:50%;
+  border:2px solid #fff;
+  object-fit:cover;margin-right:-5px;flex-shrink:0;
+  background:#D0CEC9;
+}
+.navatar-initials{
+  width:22px;height:22px;border-radius:50%;
+  border:2px solid #fff;
+  background:#d63346;color:#fff;
+  font-size:8px;font-weight:700;
+  display:flex;align-items:center;justify-content:center;
+  margin-right:-5px;flex-shrink:0;
+}
+.navatar-label{font-size:9.5px;color:#B8B5B0;margin-left:10px}
+
+.summary{
+  background:#fff;border-top:1px solid #E5E3DE;
+  padding:13px 24px;display:flex;align-items:center;gap:0;flex-shrink:0;
+}
+.sum-text{
+  flex:1;font-size:11.5px;color:#6B6B6B;line-height:1.55;
+  padding-right:24px;border-right:1px solid #E5E3DE;
+}
+.sum-stat{text-align:center;padding:0 24px;border-right:1px solid #E5E3DE}
+.sum-num  {font-size:22px;font-weight:700;color:#1A1A1A}
+.sum-lbl  {font-size:10.5px;color:#9B9B9B;margin-top:1px}
+.sum-donut{padding-left:24px;display:flex;align-items:center;gap:14px}
+.donut-txt{font-size:11.5px;color:#6B6B6B;line-height:1.6}
+.donut-pct{font-size:17px;font-weight:700;color:#d63346;display:block}
+
+/* Detail drawer */
+.drawer{
+  position:fixed;top:0;right:-360px;width:340px;height:100%;
+  background:#fff;border-left:1px solid #E0DDD8;
+  box-shadow:-4px 0 20px rgba(0,0,0,0.10);
+  display:flex;flex-direction:column;
+  transition:right .22s cubic-bezier(.4,0,.2,1);
+  z-index:100;overflow:hidden;
+}
+.drawer.open{right:0}
+.drawer-header{
+  padding:16px 16px 12px;border-bottom:1px solid #E5E3DE;
+  display:flex;align-items:flex-start;gap:8px;
+}
+.drawer-id{font-size:9.5px;font-weight:700;letter-spacing:.1em;color:#9B9B9B;margin-bottom:2px}
+.drawer-title{font-size:14px;font-weight:700;color:#1A1A1A;line-height:1.3;flex:1}
+.drawer-close{
+  background:none;border:none;cursor:pointer;
+  font-size:15px;color:#9B9B9B;padding:2px;flex-shrink:0;line-height:1;
+}
+.drawer-close:hover{color:#1A1A1A}
+.drawer-body{flex:1;overflow-y:auto;padding:14px 16px}
+.drawer-section{margin-bottom:16px}
+.drawer-section-lbl{
+  font-size:9.5px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+  color:#9B9B9B;margin-bottom:7px;
+}
+.drawer-decision-text{
+  font-size:12.5px;color:#1A1A1A;line-height:1.5;
+  background:#F7F8FA;border-radius:6px;padding:9px 11px;
+}
+.drawer-rationale{font-size:12px;color:#4A4A48;line-height:1.5}
+.drawer-status-chip{
+  display:inline-block;font-size:10.5px;font-weight:600;
+  padding:3px 9px;border-radius:20px;
+}
+.chip-approved  {background:#EAF3EC;color:#2D6B3D}
+.chip-pending   {background:#FEF8EC;color:#C17817}
+.chip-critical  {background:#FDEAEC;color:#d63346}
+.chip-notstarted{background:#F2F1EF;color:#9B9B9B}
+
+/* Signatory row */
+.sig-row{display:flex;align-items:center;gap:9px;margin-bottom:7px}
+.sig-av{width:28px;height:28px;border-radius:50%;object-fit:cover;background:#D0CEC9}
+.sig-av-ini{
+  width:28px;height:28px;border-radius:50%;
+  background:#d63346;color:#fff;
+  font-size:9px;font-weight:700;
+  display:flex;align-items:center;justify-content:center;flex-shrink:0;
+}
+.sig-name{font-size:12px;font-weight:600;color:#1A1A1A}
+.sig-role{font-size:10.5px;color:#9B9B9B}
+
+/* Document row */
+.doc-row{
+  display:flex;align-items:center;gap:9px;
+  padding:7px 9px;border:1px solid #E5E3DE;border-radius:6px;
+  margin-bottom:6px;cursor:pointer;
+}
+.doc-row:last-child{margin-bottom:0}
+.doc-row:hover{background:#F7F8FA}
+.doc-type{
+  font-size:8.5px;font-weight:700;letter-spacing:.05em;
+  padding:2px 6px;border-radius:3px;background:#E5E3DE;color:#4A4A48;flex-shrink:0;
+}
+.doc-name{font-size:12px;color:#1A1A1A;flex:1}
+.doc-arrow{font-size:10px;color:#C0BCB8}
+
+.drawer-notes{font-size:12px;color:#4A4A48;line-height:1.5;font-style:italic}
+</style>
+</head>
+<body>
+
+<div class="scroll-area" id="sa">
+<div class="flow-wrap">
+
+<svg class="conn" width="2000" height="390">
+<defs>
+  <marker id="ag" markerWidth="7" markerHeight="7" refX="5" refY="3.5" orient="auto">
+    <path d="M0,0 L0,7 L7,3.5 Z" fill="#2D6B3D"/>
+  </marker>
+  <marker id="aa" markerWidth="7" markerHeight="7" refX="5" refY="3.5" orient="auto">
+    <path d="M0,0 L0,7 L7,3.5 Z" fill="#C17817"/>
+  </marker>
+  <marker id="ac" markerWidth="7" markerHeight="7" refX="5" refY="3.5" orient="auto">
+    <path d="M0,0 L0,7 L7,3.5 Z" fill="#d63346"/>
+  </marker>
+  <marker id="an" markerWidth="7" markerHeight="7" refX="5" refY="3.5" orient="auto">
+    <path d="M0,0 L0,7 L7,3.5 Z" fill="#C8C6C2"/>
+  </marker>
+</defs>
+
+<path d="M250,85 C275,85 275,85 300,85"      stroke="#2D6B3D" stroke-width="2" fill="none" marker-end="url(#ag)"/>
+<path d="M520,85 C545,85 545,85 570,85"      stroke="#2D6B3D" stroke-width="2" fill="none" marker-end="url(#ag)"/>
+<path d="M790,85 C945,85 945,85 1100,85"     stroke="#2D6B3D" stroke-width="2" fill="none" marker-end="url(#ac)"/>
+<path d="M1320,85 C1345,85 1345,85 1370,85"  stroke="#C17817" stroke-width="2" fill="none" marker-end="url(#aa)"/>
+<path d="M1590,85 C1615,85 1615,85 1640,85"  stroke="#C8C6C2" stroke-width="2" fill="none" stroke-dasharray="5,3" marker-end="url(#an)"/>
+<path d="M410,150 C410,195 410,195 410,230"  stroke="#2D6B3D" stroke-width="2" fill="none" marker-end="url(#ag)"/>
+<path d="M520,295 C545,295 545,295 570,295"  stroke="#2D6B3D" stroke-width="2" fill="none" marker-end="url(#ag)"/>
+<path d="M790,295 C815,295 815,295 840,295"  stroke="#2D6B3D" stroke-width="2" fill="none" marker-end="url(#aa)"/>
+<path d="M1060,295 C1085,295 1085,295 1110,295" stroke="#C17817" stroke-width="2" fill="none" marker-end="url(#aa)"/>
+<path d="M1330,295 C1355,295 1490,225 1490,150" stroke="#C17817" stroke-width="2" fill="none" marker-end="url(#aa)"/>
+</svg>
+
+<!-- Upper row -->
+
+<div class="node approved" style="left:30px;top:20px" onclick="openDrawer('GA001')">
+  <div class="node-hd"><span class="ndot"></span><span class="nid">GA-001</span><span class="ndate">Jan 2026</span></div>
+  <div class="ntitle">IFU &amp; Label Design</div>
+  <div class="ndec">Instructions for use and primary label layout approved by Gilead regulatory</div>
+  <div class="nmeta">Approved Jan 2026 · Anita Devereux</div>
+  <div class="navatars">
+    <div class="navatar-initials" title="Anita Devereux">AD</div>
+    <span class="navatar-label">Approved</span>
+  </div>
+</div>
+
+<div class="node approved" style="left:300px;top:20px" onclick="openDrawer('GA002')">
+  <div class="node-hd"><span class="ndot"></span><span class="nid">GA-002</span><span class="ndate">Mar 2026</span></div>
+  <div class="ntitle">Design Freeze (V1.0)</div>
+  <div class="ndec">V1.0 device configuration formally approved — all design outputs locked</div>
+  <div class="nmeta">Approved Mar 2026 · James Okonkwo</div>
+  <div class="navatars">
+    <div class="navatar-initials" title="James Okonkwo">JO</div>
+    <div class="navatar-initials" title="Anita Devereux">AD</div>
+    <span class="navatar-label">Approved</span>
+  </div>
+</div>
+
+<div class="node approved" style="left:570px;top:20px" onclick="openDrawer('GA003')">
+  <div class="node-hd"><span class="ndot"></span><span class="nid">GA-003</span><span class="ndate">Apr 2026</span></div>
+  <div class="ntitle">DVP Rev A</div>
+  <div class="ndec">Design Verification Plan Rev A approved — scope and acceptance criteria confirmed</div>
+  <div class="nmeta">Approved Apr 2026 · Mei Lin Tan</div>
+  <div class="navatars">
+    <div class="navatar-initials" title="Mei Lin Tan">ML</div>
+    <span class="navatar-label">Approved</span>
+  </div>
+</div>
+
+<div class="node critical" style="left:1100px;top:20px" onclick="openDrawer('GA007')">
+  <div class="node-hd"><span class="ndot"></span><span class="nid">GA-007</span><span class="ndate">Jun 2026</span></div>
+  <div class="ntitle">DVP Rev C ⚠</div>
+  <div class="ndec">Revised DVP submitted 12 June — 10 days with Gilead QA against 5-day target</div>
+  <div class="nmeta">Critical path · Pending — Mei Lin Tan</div>
+  <div class="navatars">
+    <div class="navatar-initials" title="Mei Lin Tan — pending">ML</div>
+    <span class="navatar-label">Pending</span>
+  </div>
+</div>
+
+<div class="node notstarted" style="left:1370px;top:20px" onclick="openDrawer('GA009')">
+  <div class="node-hd"><span class="ndot"></span><span class="nid">GA-009</span><span class="ndate">Sep 2026</span></div>
+  <div class="ntitle">DV Test Summary</div>
+  <div class="ndec">Consolidated DV test summary report — all work packages to be completed first</div>
+  <div class="nmeta">Not started · Target Sep 2026</div>
+  <div class="navatars">
+    <div class="navatar-initials" title="Mei Lin Tan">ML</div>
+    <span class="navatar-label">Not started</span>
+  </div>
+</div>
+
+<div class="node notstarted" style="left:1640px;top:20px" onclick="openDrawer('GA010')">
+  <div class="node-hd"><span class="ndot"></span><span class="nid">GA-010</span><span class="ndate">Feb 2027</span></div>
+  <div class="ntitle">Regulatory Submission</div>
+  <div class="ndec">CE marking submission under EU MDR 2017/745 — DHF compilation complete</div>
+  <div class="nmeta">Not started · Target Feb 2027</div>
+  <div class="navatars">
+    <div class="navatar-initials" title="Anita Devereux">AD</div>
+    <span class="navatar-label">Not started</span>
+  </div>
+</div>
+
+<!-- Lower row -->
+
+<div class="node approved" style="left:300px;top:230px" onclick="openDrawer('GA004')">
+  <div class="node-hd"><span class="ndot"></span><span class="nid">GA-004</span><span class="ndate">May 2026</span></div>
+  <div class="ntitle">Risk File V8</div>
+  <div class="ndec">ISO 14971 risk file V8 — all residual risks accepted by Gilead QA</div>
+  <div class="nmeta">Approved May 2026 · Mei Lin Tan</div>
+  <div class="navatars">
+    <div class="navatar-initials" title="Mei Lin Tan">ML</div>
+    <span class="navatar-label">Approved</span>
+  </div>
+</div>
+
+<div class="node approved" style="left:570px;top:230px" onclick="openDrawer('GA005')">
+  <div class="node-hd"><span class="ndot"></span><span class="nid">GA-005</span><span class="ndate">May 2026</span></div>
+  <div class="ntitle">Quality Agreement</div>
+  <div class="ndec">Updated quality agreement signed — DV test responsibilities allocated</div>
+  <div class="nmeta">Approved May 2026 · Robert Fitzgerald</div>
+  <div class="navatars">
+    <div class="navatar-initials" title="Robert Fitzgerald">RF</div>
+    <div class="navatar-initials" title="Anita Devereux">AD</div>
+    <span class="navatar-label">Approved</span>
+  </div>
+</div>
+
+<div class="node pending" style="left:840px;top:230px" onclick="openDrawer('GA006')">
+  <div class="node-hd"><span class="ndot"></span><span class="nid">GA-006</span><span class="ndate">Jun 2026</span></div>
+  <div class="ntitle">HF Study Protocol</div>
+  <div class="ndec">Human Factors validation study protocol v4 — submitted for Gilead sign-off</div>
+  <div class="nmeta">Pending · Sofia Alvarez review</div>
+  <div class="navatars">
+    <div class="navatar-initials" title="Sofia Alvarez — pending">SA</div>
+    <span class="navatar-label">Pending</span>
+  </div>
+</div>
+
+<div class="node pending" style="left:1110px;top:230px" onclick="openDrawer('GA008')">
+  <div class="node-hd"><span class="ndot"></span><span class="nid">GA-008</span><span class="ndate">Jul 2026</span></div>
+  <div class="ntitle">Sterile Barrier Protocol</div>
+  <div class="ndec">Sterile barrier integrity test protocol — contingent on dose mapping from CRO</div>
+  <div class="nmeta">Pending · Target Jul 2026</div>
+  <div class="navatars">
+    <div class="navatar-initials" title="Mei Lin Tan — pending">ML</div>
+    <span class="navatar-label">Pending</span>
+  </div>
+</div>
+
+</div><!-- /flow-wrap -->
+</div><!-- /scroll-area -->
+
+<!-- Summary panel -->
+<div class="summary">
+  <div class="sum-text">
+    <strong>Approval status:</strong> IFU &amp; label design, design freeze V1.0, DVP Rev A, risk file V8 (ISO 14971), and quality agreement all approved. <strong style="color:#d63346">DVP Rev C is on the critical path</strong> — 10 days outstanding against a 5-day target. HF study protocol and sterile barrier protocol also pending sign-off.
+  </div>
+  <div class="sum-stat">
+    <div class="sum-num">5</div>
+    <div class="sum-lbl">Pending Approvals</div>
+  </div>
+  <div class="sum-stat">
+    <div class="sum-num">5</div>
+    <div class="sum-lbl">Approved</div>
+  </div>
+  <div class="sum-donut">
+    <svg width="56" height="56" viewBox="0 0 56 56">
+      <circle cx="28" cy="28" r="20" fill="none" stroke="#F0EDE8" stroke-width="7"/>
+      <circle cx="28" cy="28" r="20" fill="none" stroke="#d63346" stroke-width="7"
+        stroke-dasharray="62.8 62.8" transform="rotate(-90 28 28)"/>
+      <text x="28" y="32" text-anchor="middle" font-size="10" font-weight="700" fill="#1A1A1A">50%</text>
+    </svg>
+    <div class="donut-txt">
+      <span class="donut-pct">Complete</span>
+      of all required approvals
+    </div>
+  </div>
+</div>
+
+<!-- Detail drawer -->
+<div class="drawer" id="drawer">
+  <div class="drawer-header">
+    <div style="flex:1">
+      <div class="drawer-id" id="dr-id"></div>
+      <div class="drawer-title" id="dr-title"></div>
+      <div style="margin-top:6px"><span id="dr-chip" class="drawer-status-chip"></span></div>
+    </div>
+    <button class="drawer-close" onclick="closeDrawer()">✕</button>
+  </div>
+  <div class="drawer-body">
+    <div class="drawer-section">
+      <div class="drawer-section-lbl">Summary</div>
+      <div class="drawer-decision-text" id="dr-dec"></div>
+    </div>
+    <div class="drawer-section">
+      <div class="drawer-section-lbl">Context</div>
+      <div class="drawer-rationale" id="dr-rat"></div>
+    </div>
+    <div class="drawer-section" id="dr-sigs-section">
+      <div class="drawer-section-lbl">Approvers</div>
+      <div id="dr-sigs"></div>
+    </div>
+    <div class="drawer-section" id="dr-docs-section">
+      <div class="drawer-section-lbl">Documents</div>
+      <div id="dr-docs"></div>
+    </div>
+    <div class="drawer-section" id="dr-notes-section">
+      <div class="drawer-section-lbl">Notes</div>
+      <div class="drawer-notes" id="dr-notes"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+var sa=document.getElementById('sa');
+var drag=false,sx,sy,sl,st;
+sa.addEventListener('mousedown',function(e){
+  if(e.target.closest('.drawer'))return;
+  drag=true;sx=e.pageX;sy=e.pageY;sl=sa.scrollLeft;st=sa.scrollTop;
+  sa.style.cursor='grabbing';e.preventDefault();
+});
+window.addEventListener('mouseup',function(){drag=false;sa.style.cursor='grab';});
+window.addEventListener('mousemove',function(e){
+  if(!drag)return;
+  sa.scrollLeft=sl-(e.pageX-sx);
+  sa.scrollTop=st-(e.pageY-sy);
+});
+
+var DDATA = {
+  GA001:{
+    id:'GA-001', title:'IFU & Label Design', status:'approved',
+    dec:'Instructions for use (IFU) and primary label layout approved by Gilead regulatory affairs. Covers 4 language variants for initial launch markets.',
+    rat:'The IFU went through 3 revision cycles following HF formative study feedback. Key changes from v3 to v4 included simplified step numbering, larger injection site diagram, and removal of contraindication text deemed ambiguous by HF participants.',
+    sigs:[
+      {name:'Anita Devereux',   role:'Programme Director, Gilead', ini:'AD'},
+      {name:'Sofia Alvarez',    role:'HF & Regulatory, Gilead',    ini:'SA'},
+    ],
+    docs:[
+      {name:'IFU v4.1 — Final Approved',      type:'PDF'},
+      {name:'Label Layout — Primary Pack v2', type:'PDF'},
+      {name:'Regulatory Approval Record',     type:'PDF'},
+    ],
+    notes:'Approved across EN, FR, DE, ES language variants. Additional languages (IT, PT) are a post-launch change request.',
+  },
+  GA002:{
+    id:'GA-002', title:'Design Freeze (V1.0)', status:'approved',
+    dec:'V1.0 device configuration formally approved and design outputs locked at DR3 gate. No further design changes permitted without formal change control.',
+    rat:'Design freeze was achieved after resolution of the last two open design issues: needle shield material (D-014, now pending final sign-off) and spring tolerance specification (D-012, closed). Gilead device lead and programme director both signed at DR3.',
+    sigs:[
+      {name:'James Okonkwo',  role:'Device Lead, Gilead',         ini:'JO'},
+      {name:'Anita Devereux', role:'Programme Director, Gilead',  ini:'AD'},
+    ],
+    docs:[
+      {name:'Design Freeze Certificate — V1.0', type:'PDF'},
+      {name:'DR3 Design Review Minutes',        type:'Word'},
+      {name:'Design Output Register v3.2',      type:'Excel'},
+    ],
+    notes:'The needle shield material (D-014) was conditionally frozen — the steel RNS is locked as the design intent; formal Gilead sign-off is pending and does not block DV start.',
+  },
+  GA003:{
+    id:'GA-003', title:'DVP Rev A', status:'approved',
+    dec:'Design Verification Plan Rev A approved by Gilead QA. Sets the scope, acceptance criteria, and test programme for the DV phase.',
+    rat:'Rev A established 22 test work packages covering performance, reliability, usability, sterile barrier, and biocompatibility. Subsequent revisions (B, C) addressed scope changes from the spring tolerance decision (D-012) and the electronics de-scoping (D-011).',
+    sigs:[
+      {name:'Mei Lin Tan', role:'QA Director, Gilead', ini:'ML'},
+    ],
+    docs:[
+      {name:'DVP Rev A — Approved', type:'PDF'},
+      {name:'Test Plan Traceability Matrix', type:'Excel'},
+    ],
+    notes:'Rev A has since been superseded by Revisions B and C. Rev C is currently pending sign-off (GA-007).',
+  },
+  GA004:{
+    id:'GA-004', title:'Risk File V8', status:'approved',
+    dec:'ISO 14971:2019 risk management file version 8 approved by Gilead QA. All residual risks formally accepted.',
+    rat:'V8 incorporated two risk downgrades approved by the Gilead QA team: RISK-015 (cartridge cracking under drop test) downgraded from high to medium following additional packaging drop test data, and RISK-022 (label misread under low light) downgraded following revised IFU formatting. Two high-severity risks (RISK-021, RISK-027) remain open with active mitigations.',
+    sigs:[
+      {name:'Mei Lin Tan',   role:'QA Director, Gilead',  ini:'ML'},
+      {name:'Louis DeCleyn', role:'Quality & DHF, TC',    ini:'LD', photo:'img/louis_decleyn.jpg'},
+    ],
+    docs:[
+      {name:'Risk Management File v8', type:'Excel'},
+      {name:'Risk Acceptance Record — Gilead QA', type:'PDF'},
+    ],
+    notes:'RISK-021 (spring fatigue) and RISK-027 (sterile barrier) cannot be formally closed until DV test reports are signed off. V9 will be issued post-DV.',
+  },
+  GA005:{
+    id:'GA-005', title:'Quality Agreement', status:'approved',
+    dec:'Updated quality agreement between Team Consulting and Gilead Sciences signed. Allocates DV testing responsibilities, defines acceptance standards, and sets escalation paths.',
+    rat:'The original quality agreement (2025) did not cover the DV phase in sufficient detail. The 2026 update adds specific clauses for test result acceptance, out-of-specification investigation procedures, and the roles of each party in the DHF compilation.',
+    sigs:[
+      {name:'Robert Fitzgerald', role:'VP Quality, Gilead', ini:'RF'},
+      {name:'Anita Devereux',    role:'Programme Director, Gilead', ini:'AD'},
+    ],
+    docs:[
+      {name:'Quality Agreement v2.1 — Signed', type:'PDF'},
+      {name:'DV Responsibility Matrix', type:'Excel'},
+    ],
+    notes:'Agreement runs to 31 December 2027. Any scope extension (e.g., V2 device) requires a signed amendment.',
+  },
+  GA006:{
+    id:'GA-006', title:'HF Study Protocol', status:'pending',
+    dec:'Human Factors validation study protocol v4 submitted to Gilead for sign-off. Covers 30-participant summative study targeting EU MDR Annex IX requirements.',
+    rat:'The protocol was updated to v4 following FDA feedback on participant inclusion criteria — specifically the requirement to include a cohort of first-time users with no prior injection device experience. The protocol now includes 10 first-time users within the 30-participant target.',
+    sigs:[
+      {name:'Sofia Alvarez', role:'HF & Regulatory, Gilead — review pending', ini:'SA'},
+    ],
+    docs:[
+      {name:'HF Validation Study Protocol v4', type:'PDF'},
+      {name:'Participant Recruitment Criteria v3', type:'PDF'},
+      {name:'CRO Scope of Work — HF Study', type:'Word'},
+    ],
+    notes:'Sofia Alvarez review in progress. Protocol sign-off is required before CRO can begin participant recruitment. Target sign-off date is 30 June 2026.',
+  },
+  GA007:{
+    id:'GA-007', title:'DVP Rev C', status:'critical',
+    dec:'DVP Rev C submitted to Gilead QA on 12 June 2026. Revisions address spring tolerance tightening (D-012), removal of electronics work packages (D-011), and addition of shelf-life ageing protocol (CO-04).',
+    rat:'Rev B was rejected in May 2026 because the spring tolerance change had not been reflected in the acceptance criteria for Work Package 7 (dose accuracy). Rev C incorporates all required updates. Review is now 10 days outstanding against the 5-day agreed turnaround.',
+    sigs:[
+      {name:'Mei Lin Tan', role:'QA Director, Gilead — review overdue', ini:'ML'},
+    ],
+    docs:[
+      {name:'DVP Rev C — Submitted 12 Jun', type:'PDF'},
+      {name:'Rev B Rejection Note — Gilead QA', type:'PDF'},
+      {name:'DVP Change Summary Rev B to Rev C', type:'Word'},
+    ],
+    notes:'CRITICAL PATH — DVP Rev C sign-off is required before DV testing can start. Every day of delay pushes the DV exit gate by one day. Escalation to Anita Devereux recommended if not resolved by 24 June.',
+  },
+  GA008:{
+    id:'GA-008', title:'Sterile Barrier Protocol', status:'pending',
+    dec:'Sterile barrier integrity test protocol pending Gilead QA approval. Contingent on dose mapping data from the packaging CRO.',
+    rat:'The protocol cannot be finalised until the packaging CRO completes dose mapping for the shipper carton design. The carton design is itself pending design freeze of the secondary packaging (currently with Gilead marketing). Expected protocol submission date is 11 July 2026.',
+    sigs:[
+      {name:'Mei Lin Tan', role:'QA Director, Gilead — not yet submitted', ini:'ML'},
+    ],
+    docs:[
+      {name:'Sterile Barrier Protocol v0.3 — Draft', type:'PDF'},
+      {name:'CRO Dose Mapping Scope', type:'Word'},
+    ],
+    notes:'This approval is on the critical path to DV exit but is not yet blocking — it is sequenced after the shipping simulation rig build, which is scheduled August 2026.',
+  },
+  GA009:{
+    id:'GA-009', title:'DV Test Summary', status:'notstarted',
+    dec:'Consolidated Design Verification test summary report — to be compiled once all 22 work packages are complete. Required for DR5 (DV exit gate).',
+    rat:'The DV test summary aggregates all test reports into a single traceability document demonstrating that all design requirements have been verified. It is the primary input to the DR5 design review and to the EU MDR technical file.',
+    sigs:[
+      {name:'Mei Lin Tan',    role:'QA Director, Gilead', ini:'ML'},
+      {name:'James Okonkwo',  role:'Device Lead, Gilead', ini:'JO'},
+    ],
+    docs:[
+      {name:'DV Test Summary — Template v1', type:'Word'},
+    ],
+    notes:'Target completion: September 2026. Not started — all 22 DV work packages must be complete first.',
+  },
+  GA010:{
+    id:'GA-010', title:'Regulatory Submission', status:'notstarted',
+    dec:'CE marking submission under EU MDR 2017/745. Covers technical file, clinical evaluation, PMS plan, and QMS evidence.',
+    rat:'Regulatory submission is the final milestone of the programme. It depends on DR5 (DV exit), DHF compilation, clinical evaluation report, and post-market surveillance plan. Target submission to notified body: 1 February 2027.',
+    sigs:[
+      {name:'Anita Devereux', role:'Programme Director, Gilead', ini:'AD'},
+      {name:'Sofia Alvarez',  role:'HF & Regulatory, Gilead',   ini:'SA'},
+    ],
+    docs:[
+      {name:'Regulatory Strategy Document v2', type:'PDF'},
+      {name:'EU MDR Technical File — Outline', type:'Word'},
+    ],
+    notes:'Not started. Target: 1 February 2027. Contingent on all upstream approvals and DV exit gate.',
+  },
+};
+
+function openDrawer(id){
+  var d = DDATA[id];
+  if(!d) return;
+  document.getElementById('dr-id').textContent    = d.id;
+  document.getElementById('dr-title').textContent = d.title;
+  var chip = document.getElementById('dr-chip');
+  var chipMap = {approved:'✓ Approved',pending:'⏳ Pending',critical:'⚠ Critical — Overdue',notstarted:'⬡ Not started'};
+  var clsMap  = {approved:'chip-approved',pending:'chip-pending',critical:'chip-critical',notstarted:'chip-notstarted'};
+  chip.textContent = chipMap[d.status] || d.status;
+  chip.className   = 'drawer-status-chip ' + (clsMap[d.status] || '');
+  document.getElementById('dr-dec').textContent = d.dec;
+  document.getElementById('dr-rat').textContent = d.rat;
+
+  var sigsEl = document.getElementById('dr-sigs');
+  sigsEl.innerHTML = '';
+  d.sigs.forEach(function(s){
+    var row = document.createElement('div');
+    row.className = 'sig-row';
+    var av;
+    if(s.photo){
+      av = document.createElement('img');
+      av.src = s.photo; av.className = 'sig-av';
+    } else {
+      av = document.createElement('div');
+      av.className = 'sig-av-ini';
+      av.textContent = s.ini || '?';
+    }
+    var info = document.createElement('div');
+    info.innerHTML = '<div class="sig-name">'+s.name+'</div><div class="sig-role">'+s.role+'</div>';
+    row.appendChild(av); row.appendChild(info);
+    sigsEl.appendChild(row);
+  });
+
+  var docsEl = document.getElementById('dr-docs');
+  docsEl.innerHTML = '';
+  d.docs.forEach(function(doc){
+    var row = document.createElement('div');
+    row.className = 'doc-row';
+    row.innerHTML = '<span class="doc-type">'+doc.type+'</span><span class="doc-name">'+doc.name+'</span><span class="doc-arrow">↗</span>';
+    docsEl.appendChild(row);
+  });
+
+  document.getElementById('dr-notes').textContent = d.notes || '';
+  document.getElementById('drawer').classList.add('open');
+}
+
+function closeDrawer(){
+  document.getElementById('drawer').classList.remove('open');
+}
+
+document.addEventListener('keydown',function(e){
+  if(e.key==='Escape') closeDrawer();
+});
+</script>
+</body>
+</html>
