@@ -454,9 +454,15 @@ body.client-mode .ai-panel-detail-text { color: #CEC3AF; }
   margin-bottom: 20px;
   align-items: stretch;
 }
-.overview-ai-row > .ai-panel {
+/* Callback wrapper div must pass its full height into the ai-panel */
+#overview-ai-panel {
+  display: flex;
+  flex-direction: column;
+}
+#overview-ai-panel > .ai-panel {
+  flex: 1;
   margin-bottom: 0;
-  /* keep existing border-radius from .ai-panel */
+  box-sizing: border-box;
 }
 .overview-device-panel {
   background: linear-gradient(160deg, #1A2530 0%, #111111 100%);
