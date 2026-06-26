@@ -30,15 +30,12 @@ def gantt_figure(tasks, today=None, mode=None):
     # Category order reversed so first task appears at top
     category_order = [t["name"] for t in tasks_sorted][::-1]
 
-    _base_color = "#BE1E2D" if mode == "client" else "#2468C8"
+    _base_color = "#BE1E2D" if mode == "client" else "#1A3F6B"
 
     fig = go.Figure()
 
     for t in tasks_sorted:
-        if t.get("waiting_on"):
-            color = AMBER
-        else:
-            color = _base_color
+        color = _base_color
 
         duration_ms = (t["end"] - t["start"]).days * MS_PER_DAY
 
