@@ -450,22 +450,13 @@ body.client-mode .ai-panel-detail-text { color: #CEC3AF; }
 .overview-ai-row {
   display: grid;
   grid-template-columns: 1fr 260px;
-  gap: 0;
+  gap: 16px;
   margin-bottom: 20px;
-  border-radius: var(--radius);
-  overflow: hidden;
-  border: 1.5px solid rgba(255,255,255,0.08);
-  box-shadow: 0 2px 12px rgba(0,0,0,0.10);
-}
-body.client-mode .overview-ai-row {
-  border-color: rgba(190,30,45,0.25);
-  box-shadow: 0 2px 12px rgba(190,30,45,0.08);
+  align-items: stretch;
 }
 .overview-ai-row > .ai-panel {
-  border-radius: 0;
   margin-bottom: 0;
-  border-top-left-radius: calc(var(--radius) - 2px);
-  border-bottom-left-radius: calc(var(--radius) - 2px);
+  /* keep existing border-radius from .ai-panel */
 }
 .overview-device-panel {
   background: linear-gradient(160deg, #1A2530 0%, #111111 100%);
@@ -473,21 +464,19 @@ body.client-mode .overview-ai-row {
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 14px;
-  padding: 24px 18px;
-  border-top-right-radius: calc(var(--radius) - 2px);
-  border-bottom-right-radius: calc(var(--radius) - 2px);
-  border-left: 1px solid rgba(255,255,255,0.08);
-  align-self: stretch;      /* fill full row height */
+  gap: 12px;
+  padding: 20px 18px;
+  border-radius: var(--radius);   /* all four corners */
+  border: 1px solid var(--line);
+  box-shadow: var(--shadow-sm);
   min-height: 0;
 }
 body.client-mode .overview-device-panel {
   background: linear-gradient(160deg, #4A0810 0%, #200004 100%);
-  border-left-color: rgba(190,30,45,0.2);
 }
 .overview-device-img {
-  max-width: 100%;
-  max-height: 180px;
+  flex: 1;
+  min-height: 0;
   width: 100%;
   object-fit: contain;
   filter: drop-shadow(0 4px 16px rgba(0,0,0,0.5));
@@ -497,6 +486,14 @@ body.client-mode .overview-device-panel {
 .overview-device-img:hover {
   transform: scale(1.04);
   filter: drop-shadow(0 6px 22px rgba(26,139,165,0.45)) brightness(1.08);
+}
+/* The <a> wrapping the image must also flex */
+.overview-device-panel > a {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  display: flex;
+  align-items: center;
 }
 .overview-device-link {
   font-size: 11px;

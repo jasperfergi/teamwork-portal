@@ -63,38 +63,20 @@ def layout():
             _stat("87 days", "To DV exit",    "/decisions"),
         ]),
 
-        # Two-column grid
+        # Four-card grid — each card is a direct grid child so rows align
         html.Div(className="dash-grid", children=[
-            # Left column
-            html.Div([
-                card(
-                    "What I need to know",
-                    html.Div([_action(a) for a in _ACTIONS]),
-                    title_right=html.A(
-                        "View action log →",
-                        href="/project-management",
-                        className="dash-card-link",
-                    ),
-                ),
-                html.Div(style={"marginTop": "16px"}, children=[
-                    card(
-                        "Active files",
-                        html.Div([_file_row(f) for f in _FILES]),
-                        title_right=html.A(
-                            "View all →",
-                            href="/files",
-                            className="dash-card-link",
-                        ),
-                    ),
-                ]),
-            ]),
-            # Right column
-            html.Div([
-                card("Today's schedule — 23 June", html.Div([_sched_row(s) for s in _SCHEDULE])),
-                html.Div(style={"marginTop": "16px"}, children=[
-                    card("Recent activity", html.Div([_activity_row(a) for a in _ACTIVITY])),
-                ]),
-            ]),
+            card(
+                "What I need to know",
+                html.Div([_action(a) for a in _ACTIONS]),
+                title_right=html.A("View action log →", href="/project-management", className="dash-card-link"),
+            ),
+            card("Today's schedule — 23 June", html.Div([_sched_row(s) for s in _SCHEDULE])),
+            card(
+                "Active files",
+                html.Div([_file_row(f) for f in _FILES]),
+                title_right=html.A("View all →", href="/files", className="dash-card-link"),
+            ),
+            card("Recent activity", html.Div([_activity_row(a) for a in _ACTIVITY])),
         ]),
     ])
 
